@@ -7,6 +7,7 @@ let currentTab   = 'members';
 let memberFilter = 'ALL';
 let modalMemberId = null;
 let keepingMemberId = null;
+let memberNotifTargetId = null;
 let selectedLessons = new Set();
 let notifPanelOpen = false;
 let notifPollTimer = null;
@@ -145,6 +146,9 @@ function renderMemberItem(m) {
            </button>
            <button class="btn btn-outline btn-sm" style="color:#3B82F6;border-color:#3B82F6" onclick="openKeepingModal(${m.id}, '${escapeHtml(m.name)}')">
                ${m.keeping ? '키핑권 변경' : '키핑권 부여'}
+           </button>
+           <button class="btn btn-outline btn-sm" style="color:#0066FF;border-color:#0066FF" onclick="openMemberNotifModal(${m.id}, '${escapeHtml(m.name)}')">
+               알림 보내기
            </button>`
         : '';
 
@@ -933,6 +937,52 @@ function renderExpiryMemberRow(m) {
         </div>`;
 }
 
+/* ═══════════════════
+   회원 알림 보내기
+═══════════════════ */
+function openMemberNotifModal(memberId, memberName) {
+    memberNotifTargetId = memberId;
+    $('member-notif-modal-title').textContent = `알림 보내기 — ${memberName}`;
+    $('member-notif-target-name').textContent = memberName;
+    $('member-notif-message').value = '';
+    hide('member-notif-modal-alert');
+    show('member-notif-modal-overlay');
+}
+
+function closeMemberNotifModal() {
+    hide('member-notif-modal-overlay');
+    memberNotifTargetId = null;
+}
+
+async function sendMemberNotif() {
+    const message = $('member-notif-message').value.trim();
+    if (!message) {
+        $('member-notif-modal-alert').textContent = '메시지를 입력해주세요.';
+        show('member-notif-modal-alert');
+        return;
+    }
+    const btn = $('btn-send-member-notif');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+    try {
+        const data = await api(C.API.ADMIN_MEMBER_NOTIFY(memberNotifTargetId), {
+            method: 'POST',
+            body: JSON.stringify({ message }),
+        });
+        if (data?.success) {
+            closeMemberNotifModal();
+            alert('알림이 전송되었습니다.');
+        } else {
+            $('member-notif-modal-alert').textContent = data?.message || '전송에 실패했습니다.';
+            show('member-notif-modal-alert');
+        }
+    } catch {
+        $('member-notif-modal-alert').textContent = C.MESSAGES.NETWORK_ERROR;
+        show('member-notif-modal-alert');
+    } finally {
+        btn.disabled = false; btn.textContent = '보내기';
+    }
+}
+
 /* ── Logout ── */
 async function logout() {
     if (notifPollTimer) clearInterval(notifPollTimer);
@@ -984,4 +1034,5 @@ document.addEventListener('DOMContentLoaded', () => {
     $('btn-create-lesson').addEventListener('click', openLessonModal);
     $('btn-save-lesson').addEventListener('click', saveLesson);
     $('btn-delete-lessons').addEventListener('click', deleteLessons);
+    $('btn-send-member-notif').addEventListener('click', sendMemberNotif);
 });

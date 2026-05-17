@@ -21,6 +21,7 @@ public class ReservationService {
     private final LessonRepository lessonRepository;
     private final WaitlistRepository waitlistRepository;
     private final NotificationService notificationService;
+    private final MemberNotificationService memberNotificationService;
 
     @Transactional
     public ApiResponse<?> reserve(Member member, Lesson lesson) {
@@ -195,6 +196,7 @@ public class ReservationService {
 
             notificationService.createWaitlistPromoted(
                     candidate.getShop(), candidate.getName(), lesson.getTitle(), lessonDateStr);
+            memberNotificationService.createWaitlistPromoted(candidate, lesson.getTitle(), lessonDateStr);
             break;
         }
     }

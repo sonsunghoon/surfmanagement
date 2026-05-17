@@ -33,6 +33,11 @@ const SURF_SHOP_CONSTANTS = {
         MEMBER_CANCEL:    (id) => `/api/members/reservations/${id}`,
         MEMBER_WAITLIST:  (id) => `/api/members/lessons/${id}/waitlist`,
         MEMBER_CANCEL_WAITLIST: (id) => `/api/members/waitlist/${id}`,
+        MEMBER_NOTIFICATIONS:         '/api/members/notifications',
+        MEMBER_NOTIFICATIONS_COUNT:   '/api/members/notifications/count',
+        MEMBER_NOTIFICATIONS_READ_ALL:'/api/members/notifications/read-all',
+        MEMBER_NOTIFICATION_READ: (id) => `/api/members/notifications/${id}/read`,
+        ADMIN_MEMBER_NOTIFY: (id) => `/api/admin/members/${id}/notify`,
     },
 
     STORAGE: {

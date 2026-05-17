@@ -7,6 +7,7 @@ import com.surfshop.repository.MembershipRepository;
 import com.surfshop.repository.ReservationRepository;
 import com.surfshop.repository.WaitlistRepository;
 import com.surfshop.service.*;
+import com.surfshop.repository.MemberRepository;
 import org.springframework.transaction.annotation.Transactional;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -29,10 +30,12 @@ public class AdminController {
     private final LessonService lessonService;
     private final MembershipService membershipService;
     private final NotificationService notificationService;
+    private final MemberNotificationService memberNotificationService;
     private final ReservationRepository reservationRepository;
     private final WaitlistRepository waitlistRepository;
     private final KeepingMembershipRepository keepingMembershipRepository;
     private final MembershipRepository membershipRepository;
+    private final MemberRepository memberRepository;
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AdminLoginResponse>> login(@Valid @RequestBody AdminLoginRequest request) {
@@ -168,6 +171,24 @@ public class AdminController {
                 .boardImageUrl(request.getBoardImageUrl())
                 .build());
         return ResponseEntity.ok(ApiResponse.success("키핑권이 등록되었습니다."));
+    }
+
+    /* ── 회원에게 알림 보내기 ── */
+    @PostMapping("/members/{id}/notify")
+    public ResponseEntity<ApiResponse<?>> notifyMember(
+            @PathVariable Long id, @RequestBody Map<String, String> body,
+            HttpServletRequest request) {
+        Admin admin = (Admin) request.getAttribute("currentAdmin");
+        String message = body.get("message");
+        if (message == null || message.isBlank()) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("메시지를 입력해주세요."));
+        }
+        Member member = memberRepository.findById(id).orElse(null);
+        if (member == null || !member.getShop().getId().equals(admin.getShop().getId())) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("회원을 찾을 수 없습니다."));
+        }
+        memberNotificationService.createAdminMessage(member, message);
+        return ResponseEntity.ok(ApiResponse.success("알림이 전송되었습니다."));
     }
 
     /* ── 회원권 만료 현황 ── */

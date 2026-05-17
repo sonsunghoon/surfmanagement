@@ -572,6 +572,90 @@ function checkExpiryWarning(ms) {
 
 function closeExpiryModal() { hide('expiry-modal-overlay'); }
 
+/* ══════════════
+   회원 알림
+══════════════ */
+let notifPollTimer = null;
+
+async function loadNotifCount() {
+    const data = await authApi(C.API.MEMBER_NOTIFICATIONS_COUNT);
+    if (!data || !data.success) return;
+    const count = data.data.count || 0;
+    const badge = $('notif-badge');
+    if (count > 0) {
+        badge.textContent = count > 99 ? '99+' : String(count);
+        badge.classList.remove('hidden');
+    } else {
+        badge.classList.add('hidden');
+    }
+}
+
+function openNotifPanel() {
+    show('notif-overlay');
+    show('notif-panel');
+    loadNotifications();
+}
+
+function closeNotifPanel() {
+    hide('notif-overlay');
+    hide('notif-panel');
+}
+
+async function loadNotifications() {
+    $('notif-list').innerHTML = '<div class="text-center mt-16"><span class="spinner dark"></span></div>';
+    const data = await authApi(C.API.MEMBER_NOTIFICATIONS);
+    if (!data || !data.success) {
+        $('notif-list').innerHTML = '<div class="notif-empty">알림을 불러오지 못했습니다.</div>';
+        return;
+    }
+    const list = data.data;
+    if (!list.length) {
+        $('notif-list').innerHTML = '<div class="notif-empty">새 알림이 없습니다.</div>';
+        return;
+    }
+    $('notif-list').innerHTML = list.map(n => {
+        const icon = n.type === 'WAITLIST_PROMOTED' ? '🎉' : '📢';
+        const timeStr = formatNotifTime(n.createdAt);
+        return `<div class="notif-item${n.read ? ' read' : ''}" onclick="markNotifRead(${n.id}, this)">
+            <div class="notif-item-icon">${icon}</div>
+            <div class="notif-item-body">
+                <div class="notif-item-label">${escapeHtml(n.typeLabel)}</div>
+                <div class="notif-item-msg">${escapeHtml(n.message)}</div>
+                <div class="notif-item-time">${timeStr}</div>
+            </div>
+            ${!n.read ? '<div class="notif-item-dot"></div>' : ''}
+        </div>`;
+    }).join('');
+}
+
+async function markNotifRead(id, el) {
+    await authApi(C.API.MEMBER_NOTIFICATION_READ(id), { method: 'PUT' });
+    el.classList.add('read');
+    el.querySelector('.notif-item-dot')?.remove();
+    loadNotifCount();
+}
+
+async function markAllNotifsRead() {
+    await authApi(C.API.MEMBER_NOTIFICATIONS_READ_ALL, { method: 'PUT' });
+    document.querySelectorAll('#notif-list .notif-item').forEach(el => {
+        el.classList.add('read');
+        el.querySelector('.notif-item-dot')?.remove();
+    });
+    loadNotifCount();
+}
+
+function formatNotifTime(iso) {
+    const d = new Date(iso);
+    const now = new Date();
+    const diffMs = now - d;
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 1) return '방금 전';
+    if (diffMin < 60) return `${diffMin}분 전`;
+    const diffH = Math.floor(diffMin / 60);
+    if (diffH < 24) return `${diffH}시간 전`;
+    return `${d.getMonth()+1}월 ${d.getDate()}일`;
+}
+
 /* ── 기타 ── */
 function formatTime(iso) {
     const d = new Date(iso);
@@ -603,9 +687,13 @@ async function logout() {
 document.addEventListener('DOMContentLoaded', () => {
     $('btn-logout').addEventListener('click', logout);
     $('btn-refresh').addEventListener('click', loadMyInfo);
+    $('btn-notif').addEventListener('click', openNotifPanel);
+    $('notif-read-all').addEventListener('click', markAllNotifsRead);
     document.querySelectorAll('.tabs .tab-btn').forEach(btn =>
         btn.addEventListener('click', () => switchMemberTab(btn.dataset.tab)));
     $('cal-prev').addEventListener('click', prevMonth);
     $('cal-next').addEventListener('click', nextMonth);
     loadMyInfo();
+    loadNotifCount();
+    notifPollTimer = setInterval(loadNotifCount, 30000);
 });

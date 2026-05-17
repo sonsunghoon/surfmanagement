@@ -15,6 +15,9 @@
         <span id="header-name" style="font-weight:600"></span>
         <span id="header-shop" style="opacity:0.75"></span>
         <button class="btn btn-ghost btn-sm" id="btn-refresh" style="color:white;opacity:0.9" title="새로고침">↺</button>
+        <button class="btn btn-ghost btn-sm notif-bell-btn" id="btn-notif" style="color:white;opacity:0.9;position:relative" title="알림">
+            🔔<span id="notif-badge" class="notif-badge hidden"></span>
+        </button>
         <button class="btn btn-ghost btn-sm" id="btn-logout" style="color:white;opacity:0.9">로그아웃</button>
     </div>
 </header>
@@ -96,6 +99,18 @@
         <span class="icn">◉</span><span>프로필</span>
     </button>
 </nav>
+
+<!-- ═══════════════════ 알림 패널 ═══════════════════ -->
+<div id="notif-overlay" class="notif-overlay hidden" onclick="closeNotifPanel()"></div>
+<div id="notif-panel" class="notif-panel hidden">
+    <div class="notif-panel-header">
+        <span>알림</span>
+        <button class="btn btn-ghost btn-sm" id="notif-read-all" style="font-size:12px;color:var(--primary)">모두 읽음</button>
+    </div>
+    <div id="notif-list" class="notif-list">
+        <div class="text-center mt-16"><span class="spinner dark"></span></div>
+    </div>
+</div>
 
 <!-- ═══════════════════ D-7 만료 경고 모달 ═══════════════════ -->
 <div id="expiry-modal-overlay" class="expiry-modal-overlay hidden" onclick="closeExpiryModal()">

@@ -1553,3 +1553,67 @@ html, body {
 
 .expiry-urgency-badge.danger { background: #FEF2F2; color: #B91C1C; }
 .expiry-urgency-badge.warn   { background: #FFF7ED; color: #C2410C; }
+
+/* ─── 회원 알림 패널 ─── */
+.notif-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 999;
+}
+
+.notif-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.notif-empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--fg-neutral-tertiary);
+  font-size: 13px;
+}
+
+/* member notif item layout (different from admin .notif-content/.notif-icon) */
+.notif-item-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.notif-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.notif-item-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.notif-item-msg {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--fg-neutral-secondary);
+}
+
+.notif-item-time {
+  font-size: 11px;
+  color: var(--fg-neutral-tertiary);
+  margin-top: 4px;
+}
+
+.notif-item-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--primary);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+.notif-item.read { background: white; }
+.notif-item:not(.read) { background: #EBF2FF; }

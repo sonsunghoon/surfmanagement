@@ -6,8 +6,10 @@ import com.surfshop.dto.MemberLoginResponse;
 import com.surfshop.dto.MemberRegistrationRequest;
 import com.surfshop.entity.*;
 import com.surfshop.repository.KeepingMembershipRepository;
+import com.surfshop.repository.MemberNotificationRepository;
 import com.surfshop.repository.WaitlistRepository;
 import com.surfshop.service.LessonService;
+import com.surfshop.service.MemberNotificationService;
 import com.surfshop.service.MemberService;
 import com.surfshop.service.ReservationService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,6 +35,7 @@ public class GuestController {
     private final MemberService memberService;
     private final LessonService lessonService;
     private final ReservationService reservationService;
+    private final MemberNotificationService memberNotificationService;
     private final WaitlistRepository waitlistRepository;
     private final KeepingMembershipRepository keepingMembershipRepository;
 
@@ -199,6 +202,46 @@ public class GuestController {
     public ResponseEntity<ApiResponse<?>> getMyReservations(HttpServletRequest request) {
         Member member = (Member) request.getAttribute("currentMember");
         return ResponseEntity.ok(ApiResponse.success("예약 목록", List.of()));
+    }
+
+    /* ── 회원 알림 ── */
+    @GetMapping("/notifications")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getMyNotifications(HttpServletRequest request) {
+        Member member = (Member) request.getAttribute("currentMember");
+        List<Map<String, Object>> result = memberNotificationService.getNotifications(member).stream()
+                .map(n -> {
+                    Map<String, Object> map = new LinkedHashMap<>();
+                    map.put("id", n.getId());
+                    map.put("type", n.getType().name());
+                    map.put("typeLabel", n.getType().getLabel());
+                    map.put("message", n.getMessage());
+                    map.put("lessonTitle", n.getLessonTitle());
+                    map.put("lessonDate", n.getLessonDate());
+                    map.put("read", n.isRead());
+                    map.put("createdAt", n.getCreatedAt().toString());
+                    return map;
+                }).collect(Collectors.toList());
+        return ResponseEntity.ok(ApiResponse.success("알림 조회", result));
+    }
+
+    @GetMapping("/notifications/count")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getMyNotificationCount(HttpServletRequest request) {
+        Member member = (Member) request.getAttribute("currentMember");
+        long count = memberNotificationService.getUnreadCount(member);
+        return ResponseEntity.ok(ApiResponse.success("안읽은 알림", Map.of("count", count)));
+    }
+
+    @PutMapping("/notifications/read-all")
+    public ResponseEntity<ApiResponse<?>> markAllMyNotificationsRead(HttpServletRequest request) {
+        Member member = (Member) request.getAttribute("currentMember");
+        memberNotificationService.markAllRead(member);
+        return ResponseEntity.ok(ApiResponse.success("전체 읽음 처리되었습니다."));
+    }
+
+    @PutMapping("/notifications/{id}/read")
+    public ResponseEntity<ApiResponse<?>> markMyNotificationRead(@PathVariable Long id) {
+        memberNotificationService.markRead(id);
+        return ResponseEntity.ok(ApiResponse.success("읽음 처리되었습니다."));
     }
 
     /* ── Helpers ── */
