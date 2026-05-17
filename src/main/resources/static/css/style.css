@@ -541,9 +541,9 @@ html, body {
 }
 
 .stat-value {
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 700;
-  color: var(--fg-neutral-strong);
+  color: var(--primary);
   line-height: 1;
   margin-bottom: 4px;
 }
@@ -811,26 +811,24 @@ html, body {
 
 .radio-label input { accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer; }
 
-/* ─── Membership Card — gradient card (member page) ─── */
+/* ─── Membership Card — pastel gradient card (member page) ─── */
 .membership-card { margin-top: 16px; }
 
 .ms-card {
-  border-radius: var(--radius-lg);
-  padding: 22px 20px 18px;
+  border-radius: 20px;
+  padding: 18px;
   position: relative;
   overflow: hidden;
 }
 
-/* Period: violet gradient */
+/* Period: light violet pastel — matches design .member-card.violet */
 .ms-card-period {
-  background: linear-gradient(145deg, #A78BFA 0%, #6D28D9 100%);
-  color: white;
+  background: linear-gradient(180deg, #E4DBFE 0%, #C9B9FB 100%);
 }
 
-/* Session: orange gradient */
+/* Session: light orange pastel — matches design .member-card */
 .ms-card-session {
-  background: linear-gradient(145deg, #FFBF73 0%, #F97316 100%);
-  color: white;
+  background: linear-gradient(180deg, #FFE4C7 0%, #FFD2A0 100%);
 }
 
 .ms-card-expired {
@@ -843,71 +841,91 @@ html, body {
   border: 2px dashed var(--gray-300);
 }
 
-.ms-icon {
-  font-size: 28px;
-  display: block;
-  margin-bottom: 8px;
-}
-
+/* ms-type: small label above big number */
 .ms-type {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  opacity: 0.75;
+  font-size: 12px;
+  font-weight: 500;
   margin-bottom: 4px;
 }
 
+.ms-card-period .ms-type { color: #4B2D9E; }
+.ms-card-session .ms-type { color: #8A4A14; }
 .ms-card-expired .ms-type,
-.ms-card-none .ms-type { color: var(--gray-500); opacity: 1; }
+.ms-card-none .ms-type { color: var(--gray-500); }
 
-.ms-detail {
-  font-size: 13px;
-  opacity: 0.85;
-  margin-bottom: 8px;
+/* Usage counter chip (top-right) */
+.ms-usage-chip {
+  background: rgba(255,255,255,0.5);
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
 }
+.ms-card-session .ms-usage-chip { color: #8A4A14; }
+.ms-card-period  .ms-usage-chip { color: #4B2D9E; }
 
-.ms-card-expired .ms-detail,
-.ms-card-none .ms-detail { color: var(--gray-600); }
-
+/* Big remaining number */
 .ms-remain {
   display: flex;
   align-items: baseline;
   gap: 4px;
-  margin-bottom: 8px;
+  margin-top: 6px;
+  margin-bottom: 0;
 }
 
 .ms-remain-num {
-  font-size: 38px;
+  font-size: 36px;
   font-weight: 800;
   line-height: 1;
-  letter-spacing: -1px;
+  letter-spacing: -0.03em;
 }
 
-.ms-remain-unit { font-size: 16px; font-weight: 600; opacity: 0.85; }
-
+.ms-card-period  .ms-remain-num { color: #2A1764; }
+.ms-card-session .ms-remain-num { color: #4A2A0A; }
 .ms-card-expired .ms-remain-num,
-.ms-card-none .ms-remain-num { color: var(--fg-neutral-strong); }
+.ms-card-none    .ms-remain-num { color: var(--fg-neutral-strong); }
 
+.ms-remain-unit { font-size: 16px; font-weight: 500; }
+.ms-card-period  .ms-remain-unit { color: #4B2D9E; }
+.ms-card-session .ms-remain-unit { color: #8A4A14; }
+
+/* Status pill */
 .ms-status {
   display: inline-flex;
   align-items: center;
-  padding: 4px 14px;
+  padding: 3px 10px;
   border-radius: var(--radius-full);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  margin-top: 6px;
+  margin-top: 10px;
 }
 
+/* Active cards: green pill (예약 가능) */
 .ms-card-period .ms-status,
 .ms-card-session .ms-status {
-  background: rgba(255,255,255,0.28);
-  color: white;
+  background: #E0F7E7;
+  color: #15803D;
+}
+
+/* Violet card: white pill with violet text */
+.ms-card-period .ms-status {
+  background: rgba(255,255,255,0.6);
+  color: #6541F2;
 }
 
 .ms-status-ok    { background: #DCFCE7; color: #15803D; }
-.ms-status-warn  { background: #FFF7ED; color: #C2410C; }
+.ms-status-warn  { background: rgba(255,255,255,0.5); color: #C2410C; }
 .ms-status-danger { background: #FEF2F2; color: #B91C1C; }
+
+/* ms-detail (date range / session summary) */
+.ms-detail {
+  font-size: 12px;
+  margin-top: 10px;
+}
+.ms-card-period  .ms-detail { color: #4B2D9E; opacity: 0.7; }
+.ms-card-session .ms-detail { color: #8A4A14; opacity: 0.7; }
+.ms-card-expired .ms-detail,
+.ms-card-none    .ms-detail { color: var(--gray-600); }
 
 /* ─── Session Dots ─── */
 .session-dots {
@@ -918,17 +936,22 @@ html, body {
 }
 
 .session-dot {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.3);
 }
 
-.session-dot.used { background: rgba(255,255,255,0.9); }
+/* Session (orange) card dots */
+.ms-card-session .session-dot       { background: rgba(74,42,10,0.18); }
+.ms-card-session .session-dot.used  { background: var(--primary); }
 
-/* Dots for expired/none */
+/* Period (violet) card dots */
+.ms-card-period .session-dot       { background: rgba(43,23,100,0.18); }
+.ms-card-period .session-dot.used  { background: #6541F2; }
+
+/* Expired/none dots */
 .ms-card-expired .session-dot,
-.ms-card-none    .session-dot { background: var(--gray-300); }
+.ms-card-none    .session-dot      { background: var(--gray-300); }
 .ms-card-expired .session-dot.used,
 .ms-card-none    .session-dot.used { background: var(--primary); }
 
@@ -1216,16 +1239,15 @@ html, body {
   margin-top: 6px;
 }
 
-/* ─── 키핑권 카드 ─── */
+/* ─── 키핑권 카드 — light sky-blue pastel ─── */
 #keeping-card .ms-card {
-  background: linear-gradient(145deg, #60A5FA 0%, #2563EB 100%);
-  color: white;
+  background: linear-gradient(180deg, #BAE6FD 0%, #7DD3FC 100%);
   border: none;
 }
 
-#keeping-card .ms-type { color: rgba(255,255,255,0.8); opacity: 1; }
-#keeping-card .ms-detail { opacity: 0.9; }
-#keeping-card .ms-status { background: rgba(255,255,255,0.28); color: white; }
+#keeping-card .ms-type   { color: #0C4A6E; opacity: 1; }
+#keeping-card .ms-detail { color: #0C4A6E; opacity: 0.75; }
+#keeping-card .ms-status { background: rgba(255,255,255,0.6); color: #0369A1; }
 
 /* ─── Modal Large ─── */
 .modal-box-lg { max-width: 560px; }
@@ -1260,9 +1282,10 @@ html, body {
 
 .spark-bar {
   flex: 1;
-  background: var(--primary-light);
-  border-radius: 3px 3px 0 0;
+  background: #EAF2FE;
+  border-radius: 2px;
   transition: background 0.2s;
+  min-height: 4px;
 }
 
 .spark-bar.hi { background: var(--primary); }
@@ -1395,55 +1418,126 @@ html, body {
 
 .expiry-info-row span:first-child { color: var(--fg-neutral-tertiary); }
 
-/* ─── Admin Expiry Segment Tiles ─── */
+/* ─── Admin Expiry Segment Tiles — matches design H3_AdminDash ─── */
 .seg-tiles {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 4px;
 }
 
 .seg-tile {
   background: white;
-  border: 2px solid var(--line-soft);
-  border-radius: var(--radius-lg);
-  padding: 16px 12px;
-  text-align: center;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
-.seg-tile:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.seg-tile:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
 
-.seg-tile.danger { border-color: #FECACA; }
-.seg-tile.warn   { border-color: #FED7AA; }
-.seg-tile.safe   { border-color: #BBF7D0; }
+.seg-tile.active { box-shadow: var(--shadow-sm); }
+.seg-tile.danger.active { background: #FEF2F2; border-color: #FECACA; }
+.seg-tile.warn.active   { background: #FFF7ED; border-color: #FED7AA; }
+.seg-tile.safe.active   { background: #DCFCE7; border-color: #BBF7D0; }
 
-.seg-tile.danger.active { background: #FEF2F2; border-color: var(--danger); }
-.seg-tile.warn.active   { background: #FFF7ED; border-color: var(--warning); }
-.seg-tile.safe.active   { background: #DCFCE7; border-color: var(--success); }
-
-.seg-num {
-  font-size: 32px;
-  font-weight: 800;
-  line-height: 1;
-  margin-bottom: 4px;
-}
-
-.seg-tile.danger .seg-num { color: var(--danger); }
-.seg-tile.warn .seg-num   { color: var(--warning); }
-.seg-tile.safe .seg-num   { color: var(--success); }
-
+/* label row (top) — colored per tier */
 .seg-label {
   font-size: 12px;
-  font-weight: 700;
-  color: var(--fg-neutral-strong);
-  margin-bottom: 3px;
+  font-weight: 600;
 }
+.seg-tile.danger .seg-label { color: var(--danger); }
+.seg-tile.warn   .seg-label { color: var(--warning); }
+.seg-tile.safe   .seg-label { color: var(--success); }
 
+/* big count number */
+.seg-num {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.seg-tile.danger .seg-num { color: var(--danger); }
+.seg-tile.warn   .seg-num { color: var(--warning); }
+.seg-tile.safe   .seg-num { color: var(--success); }
+
+/* sub hint (bottom) */
 .seg-sub {
   font-size: 11px;
   color: var(--fg-neutral-tertiary);
+}
+
+/* ─── Bottom Navigation (member) ─── */
+.bnav {
+  height: 56px;
+  background: white;
+  border-top: 1px solid var(--line-soft);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 50;
+}
+
+.bnav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--fg-neutral-tertiary);
+  cursor: pointer;
+  transition: color 0.15s;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  padding: 0;
+}
+
+.bnav-item.active { color: var(--primary); font-weight: 600; }
+.bnav-item .icn { font-size: 20px; line-height: 1; }
+
+/* ─── Member Row Card (design: H3_AdminDash MemberRow) ─── */
+.member-row {
+  background: white;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.member-row .info { flex: 1; min-width: 0; }
+
+.member-row .name {
+  font-weight: 700;
+  color: var(--fg-neutral-strong);
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.member-row .meta-line {
+  font-size: 11px;
+  color: var(--fg-neutral-tertiary);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.member-row .meta-chips {
+  display: flex;
+  gap: 4px;
+  margin-top: 5px;
+  flex-wrap: wrap;
 }
 
 /* ─── Expiry Urgency Badge ─── */

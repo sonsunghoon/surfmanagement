@@ -858,19 +858,19 @@ function renderExpiryDashboard(d, activeSegment) {
     container.innerHTML = `
         <div class="seg-tiles">
             <div class="seg-tile danger ${activeSegment === 'd7' ? 'active' : ''}" id="seg-d7" onclick="showExpirySegment('d7')">
+                <div class="seg-label">D-7 이내</div>
                 <div class="seg-num">${d.d7Count}</div>
-                <div class="seg-label">D-7 이내 만료</div>
-                <div class="seg-sub">긴급 연락 필요</div>
+                <div class="seg-sub">즉시 조치 필요</div>
             </div>
             <div class="seg-tile warn ${activeSegment === 'd30' ? 'active' : ''}" id="seg-d30" onclick="showExpirySegment('d30')">
+                <div class="seg-label">D-30 이내</div>
                 <div class="seg-num">${d.d30Count}</div>
-                <div class="seg-label">D-30 이내 만료</div>
-                <div class="seg-sub">갱신 안내 필요</div>
+                <div class="seg-sub">리마인드 권장</div>
             </div>
             <div class="seg-tile safe ${activeSegment === 'active' ? 'active' : ''}" id="seg-active" onclick="showExpirySegment('active')">
+                <div class="seg-label">활성</div>
                 <div class="seg-num">${d.activeCount}</div>
-                <div class="seg-label">활성 회원</div>
-                <div class="seg-sub">잔여 충분</div>
+                <div class="seg-sub">유효 회원권</div>
             </div>
         </div>
         <div id="expiry-member-section" class="mt-8"></div>`;
@@ -899,39 +899,38 @@ function showExpirySegment(segment) {
     }
 
     section.innerHTML = `
-        <div class="card">
-            <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
-                <span>${title}</span>
-                <span style="font-size:12px;color:var(--gray-500)">${members.length}명</span>
-            </div>
-            <ul class="member-list">${members.map(renderExpiryMemberRow).join('')}</ul>
+        <div style="display:flex;flex-direction:column;gap:8px">
+            ${members.map(renderExpiryMemberRow).join('')}
         </div>`;
 }
 
 function renderExpiryMemberRow(m) {
-    const isPeriod = m.membershipType === 'PERIOD';
-    const msType   = isPeriod ? '기간권' : '횟수권';
-    const detail   = isPeriod
-        ? `만료일 ${escapeHtml(m.endDate)} · ${m.daysLeft}일 남음`
+    const isPeriod  = m.membershipType === 'PERIOD';
+    const detail    = isPeriod
+        ? `${escapeHtml(m.endDate)} 만료 · D-${m.daysLeft}`
         : `잔여 ${m.sessionsLeft}회 / 총 ${m.totalSessions}회`;
-    const badgeCls = m.urgencyClass === 'danger' ? 'expiry-urgency-badge danger' : 'expiry-urgency-badge warn';
-    const msBadgeCls = isPeriod ? 'badge-ms-period' : 'badge-ms-session';
+    const badgeCls  = m.urgencyClass === 'danger' ? 'expiry-urgency-badge danger' : 'expiry-urgency-badge warn';
+    const chipColor = isPeriod ? '#ECE7FE' : '#FFEDD6';
+    const chipText  = isPeriod ? '#6541F2' : '#F97316';
+    const msLabel   = isPeriod ? '기간권' : '횟수권';
 
     return `
-        <li class="member-item">
+        <div class="member-row fade-in">
             <div class="member-avatar">${escapeHtml(m.name.charAt(0))}</div>
-            <div class="member-info">
-                <div class="member-name">${escapeHtml(m.name)}</div>
-                <div class="member-meta">${escapeHtml(m.phone)}</div>
-                <div class="member-meta" style="margin-top:4px">
-                    <span class="badge ${msBadgeCls}">${msType}</span>
-                    <span>${escapeHtml(detail)}</span>
+            <div class="info">
+                <div class="name">${escapeHtml(m.name)}</div>
+                <div class="meta-line">
+                    <span>${escapeHtml(m.phone)}</span>
+                </div>
+                <div class="meta-chips">
+                    <span class="badge" style="background:${chipColor};color:${chipText}">${msLabel}</span>
+                    <span class="badge badge-no-ms">${escapeHtml(detail)}</span>
                 </div>
             </div>
             <div style="flex-shrink:0">
                 <span class="${badgeCls}">${escapeHtml(m.urgencyLabel)}</span>
             </div>
-        </li>`;
+        </div>`;
 }
 
 /* ── Logout ── */

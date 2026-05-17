@@ -81,18 +81,31 @@
 
 </main>
 
-<footer style="text-align:center;padding:20px;color:var(--gray-400);font-size:12px">
-    SurfBook © 2026 · 서핑샵 예약 관리 서비스
-</footer>
+<!-- ─── Bottom Navigation ─── -->
+<nav class="bnav">
+    <button class="bnav-item active" id="bnav-home" onclick="switchBnav('home')">
+        <span class="icn">⌂</span><span>홈</span>
+    </button>
+    <button class="bnav-item" id="bnav-book" onclick="switchBnav('book')">
+        <span class="icn">☷</span><span>예약</span>
+    </button>
+    <button class="bnav-item" id="bnav-mine" onclick="switchBnav('mine')">
+        <span class="icn">✓</span><span>내 수업</span>
+    </button>
+    <button class="bnav-item" id="bnav-me" onclick="switchBnav('me')">
+        <span class="icn">◉</span><span>프로필</span>
+    </button>
+</nav>
 
 <!-- ═══════════════════ D-7 만료 경고 모달 ═══════════════════ -->
 <div id="expiry-modal-overlay" class="expiry-modal-overlay hidden" onclick="closeExpiryModal()">
     <div class="expiry-modal" onclick="event.stopPropagation()">
-        <div class="expiry-modal-icon">⚠️</div>
-        <h2 id="expiry-modal-title">회원권 만료 임박</h2>
-        <p id="expiry-modal-desc" style="font-size:14px;color:var(--fg-neutral-tertiary);line-height:1.6;margin:10px 0 16px"></p>
+        <div style="width:56px;height:56px;border-radius:28px;background:#FFE3E3;display:grid;place-items:center;font-size:26px;margin:0 auto 12px">⏳</div>
+        <h2 id="expiry-modal-title" style="text-align:center;font-size:17px;margin:0 0 6px">회원권이 곧 만료돼요</h2>
+        <p id="expiry-modal-desc" style="font-size:13px;color:var(--fg-neutral-tertiary);line-height:1.6;text-align:center;margin:0 0 14px"></p>
         <div class="expiry-info-box" id="expiry-modal-info"></div>
         <button class="btn btn-primary btn-block mt-16" onclick="closeExpiryModal()">확인했습니다</button>
+        <button class="btn btn-outline btn-block mt-8" style="font-size:13px" onclick="closeExpiryModal()">나중에</button>
     </div>
 </div>
 

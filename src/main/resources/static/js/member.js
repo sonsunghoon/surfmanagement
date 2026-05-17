@@ -49,12 +49,26 @@ function renderPage(d) {
     loadLifecycleStats();
 }
 
+const BNAV_TAB_MAP = { home: 'profile', book: 'reserve', mine: 'mylessons', me: 'profile' };
+const TAB_BNAV_MAP = { profile: 'home', reserve: 'book', mylessons: 'mine' };
+
 function switchMemberTab(tab) {
     document.querySelectorAll('.tabs .tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
     hide('tab-profile'); hide('tab-mylessons'); hide('tab-reserve');
     show(`tab-${tab}`);
     if (tab === 'reserve') loadCalendar();
     if (tab === 'mylessons') loadMyLessons();
+    const bnavKey = TAB_BNAV_MAP[tab] || 'home';
+    document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+    const bnavEl = $(`bnav-${bnavKey}`);
+    if (bnavEl) bnavEl.classList.add('active');
+}
+
+function switchBnav(key) {
+    document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+    const el = $(`bnav-${key}`);
+    if (el) el.classList.add('active');
+    switchMemberTab(BNAV_TAB_MAP[key] || 'profile');
 }
 
 /* ══════════════
@@ -341,15 +355,14 @@ function nextMonth() {
 ══════════════ */
 function renderMembershipCard(ms) {
     const card = $('membership-card');
-    const hint = '<div style="font-size:11px;opacity:0.55;margin-top:10px;letter-spacing:-0.2px">탭하여 수업 예약 →</div>';
+    const hint = '<div style="font-size:11px;margin-top:12px;letter-spacing:-0.2px;opacity:0.6">탭하여 수업 예약 →</div>';
 
     if (!ms) {
         card.innerHTML = `<div class="ms-card ms-card-none" style="padding:20px">
-            <span class="ms-icon">🏄</span>
-            <div class="ms-type">회원권 없음</div>
-            <div class="ms-detail" style="color:var(--gray-600)">담당 관리자에게 회원권 발급을 요청하세요.</div>
-            <div class="ms-status ms-status-warn" style="margin-top:10px">예약 불가</div>
-            ${hint}
+            <div class="ms-type" style="color:var(--gray-500)">회원권 없음</div>
+            <div class="ms-remain"><span class="ms-remain-num" style="font-size:22px;color:var(--gray-400)">—</span></div>
+            <div class="ms-detail" style="color:var(--gray-500)">관리자에게 회원권 발급을 요청하세요.</div>
+            <div class="ms-status ms-status-warn">예약 불가</div>
         </div>`;
         return;
     }
@@ -357,35 +370,38 @@ function renderMembershipCard(ms) {
     if (ms.type === 'PERIOD') {
         const expired = ms.expired, remain = ms.remainDays;
         const cardCls = expired ? 'ms-card-expired' : 'ms-card-period';
+        const statusClass = expired ? 'ms-status-danger' : remain <= 7 ? 'ms-status-warn' : '';
+        const statusText  = expired ? '만료됨 · 예약 불가' : ms.canReserve ? '예약 가능' : '예약 불가';
         card.innerHTML = `<div class="ms-card ${cardCls}">
-            <span class="ms-icon">📅</span>
-            <div class="ms-type">기간권</div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                <div class="ms-type">기간권 · ${escapeHtml(memberData?.shopName || '')}</div>
+                ${!expired ? `<span class="ms-usage-chip">D-${remain}</span>` : ''}
+            </div>
             ${expired
-                ? `<div class="ms-detail">${escapeHtml(ms.startDate)} ~ ${escapeHtml(ms.endDate)}</div>
-                   <div class="ms-status ms-status-danger" style="margin-top:6px">만료됨 · 예약 불가</div>`
+                ? `<div class="ms-remain"><span class="ms-remain-num">만료</span></div>`
                 : `<div class="ms-remain">
                        <span class="ms-remain-num">${remain}</span>
                        <span class="ms-remain-unit">일 남음</span>
-                   </div>
-                   <div class="ms-detail">${escapeHtml(ms.startDate)} ~ ${escapeHtml(ms.endDate)}</div>
-                   <div class="ms-status ${remain <= 7 ? 'ms-status-warn' : ''}">${ms.canReserve ? '예약 가능' : '예약 불가'}</div>`
+                   </div>`
             }
+            <div class="ms-status ${statusClass}">${statusText}</div>
+            <div class="ms-detail">${escapeHtml(ms.startDate)} ~ ${escapeHtml(ms.endDate)}</div>
             ${hint}
         </div>`;
     } else {
         const remain = ms.remainSessions;
         const cardCls = remain === 0 ? 'ms-card-expired' : 'ms-card-session';
+        const statusText = remain > 0 ? '예약 가능' : '예약 불가 (횟수 소진)';
         card.innerHTML = `<div class="ms-card ${cardCls}">
-            <span class="ms-icon">🎫</span>
-            <div class="ms-type">횟수권</div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                <div class="ms-type">횟수권 · ${escapeHtml(memberData?.shopName || '')}</div>
+                <span class="ms-usage-chip">${ms.totalSessions}회 중 ${ms.usedSessions}회</span>
+            </div>
             <div class="ms-remain">
                 <span class="ms-remain-num">${remain}</span>
                 <span class="ms-remain-unit">회 남음</span>
             </div>
-            <div class="ms-detail">총 ${ms.totalSessions}회 · 사용 ${ms.usedSessions}회</div>
-            <div class="ms-status ${remain > 0 ? '' : 'ms-status-danger'}">
-                ${remain > 0 ? '예약 가능' : '예약 불가 (횟수 소진)'}
-            </div>
+            <div class="ms-status ${remain > 0 ? '' : 'ms-status-danger'}">${statusText}</div>
             ${renderSessionDots(ms.totalSessions, ms.usedSessions)}
             ${hint}
         </div>`;
@@ -417,11 +433,10 @@ function renderKeepingCard(k) {
         <div class="ms-card ${expired ? 'ms-card-expired' : ''}">
             <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
                 <div style="flex:1">
-                    <span class="ms-icon">🏄‍♂️</span>
                     <div class="ms-type">키핑권 · 보드 보관</div>
-                    ${k.boardBrand ? `<div class="ms-detail" style="font-weight:700;font-size:15px">🏂 ${escapeHtml(k.boardBrand)}</div>` : ''}
+                    ${k.boardBrand ? `<div class="ms-remain" style="margin-top:6px"><span class="ms-remain-num" style="font-size:22px">🏂 ${escapeHtml(k.boardBrand)}</span></div>` : ''}
+                    <div class="ms-status ${statusCls}" style="margin-top:10px">${remainText}</div>
                     <div class="ms-detail">${escapeHtml(k.startDate)} ~ ${k.endDate ? escapeHtml(k.endDate) : '종료일 없음'}</div>
-                    <div class="ms-status ${statusCls}" style="margin-top:8px">${remainText}</div>
                 </div>
                 ${k.boardImageUrl ? `<img src="${escapeHtml(k.boardImageUrl)}" alt="보드" style="width:72px;height:64px;object-fit:cover;border-radius:10px;flex-shrink:0;opacity:0.92" onerror="this.style.display='none'">` : ''}
             </div>
