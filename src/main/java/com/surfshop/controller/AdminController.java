@@ -1,20 +1,17 @@
 package com.surfshop.controller;
 
-import com.surfshop.dto.AdminLoginRequest;
-import com.surfshop.dto.AdminLoginResponse;
-import com.surfshop.dto.ApiResponse;
-import com.surfshop.dto.LessonCreateRequest;
-import com.surfshop.dto.MembershipAssignRequest;
+import com.surfshop.dto.*;
 import com.surfshop.entity.*;
+import com.surfshop.repository.KeepingMembershipRepository;
+import com.surfshop.repository.MembershipRepository;
 import com.surfshop.repository.ReservationRepository;
-import com.surfshop.service.AdminService;
-import com.surfshop.service.LessonService;
-import com.surfshop.service.MemberService;
-import com.surfshop.service.MembershipService;
+import com.surfshop.repository.WaitlistRepository;
+import com.surfshop.service.*;
 import org.springframework.transaction.annotation.Transactional;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,23 +28,23 @@ public class AdminController {
     private final MemberService memberService;
     private final LessonService lessonService;
     private final MembershipService membershipService;
+    private final NotificationService notificationService;
     private final ReservationRepository reservationRepository;
+    private final WaitlistRepository waitlistRepository;
+    private final KeepingMembershipRepository keepingMembershipRepository;
+    private final MembershipRepository membershipRepository;
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AdminLoginResponse>> login(@Valid @RequestBody AdminLoginRequest request) {
         ApiResponse<AdminLoginResponse> response = adminService.login(request);
-        if (response.isSuccess()) {
-            return ResponseEntity.ok(response);
-        }
+        if (response.isSuccess()) return ResponseEntity.ok(response);
         return ResponseEntity.badRequest().body(response);
     }
 
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<?>> logout(HttpServletRequest request) {
         String token = extractToken(request);
-        if (token != null) {
-            adminService.logout(token);
-        }
+        if (token != null) adminService.logout(token);
         return ResponseEntity.ok(ApiResponse.success("로그아웃 되었습니다."));
     }
 
@@ -59,7 +56,6 @@ public class AdminController {
         List<Member> pendingMembers = memberService.getPendingMembers(shop);
         List<Lesson> todayLessons = lessonService.getTodayLessons(shop);
         List<Member> allMembers = memberService.getAllMembers(shop);
-
         long approvedCount = allMembers.stream()
                 .filter(m -> m.getStatus() == Member.MemberStatus.APPROVED).count();
 
@@ -69,6 +65,7 @@ public class AdminController {
         data.put("approvedCount", approvedCount);
         data.put("todayLessonCount", todayLessons.size());
         data.put("totalMemberCount", allMembers.size());
+        data.put("unreadNotifications", notificationService.getUnreadCount(shop));
 
         return ResponseEntity.ok(ApiResponse.success("대시보드 조회 성공", data));
     }
@@ -95,10 +92,13 @@ public class AdminController {
             map.put("status", m.getStatus().getLabel());
             map.put("statusCode", m.getStatus().name());
             map.put("createdAt", m.getCreatedAt().toString());
-            memberService.getMembership(m).ifPresentOrElse(ms -> {
-                Map<String, Object> msMap = buildMembershipMap(ms);
-                map.put("membership", msMap);
-            }, () -> map.put("membership", null));
+            memberService.getMembership(m).ifPresentOrElse(
+                    ms -> map.put("membership", buildMembershipMap(ms)),
+                    () -> map.put("membership", null));
+            keepingMembershipRepository.findTopByMemberAndActiveTrueOrderByCreatedAtDesc(m)
+                    .ifPresentOrElse(
+                            k -> map.put("keeping", buildKeepingMap(k)),
+                            () -> map.put("keeping", null));
             return map;
         }).collect(Collectors.toList());
 
@@ -117,8 +117,7 @@ public class AdminController {
 
     @PostMapping("/members/{id}/membership")
     public ResponseEntity<ApiResponse<?>> assignMembership(
-            @PathVariable Long id,
-            @RequestBody MembershipAssignRequest request) {
+            @PathVariable Long id, @RequestBody MembershipAssignRequest request) {
         ApiResponse<?> response = membershipService.assignMembership(id, request);
         if (response.isSuccess()) return ResponseEntity.ok(response);
         return ResponseEntity.badRequest().body(response);
@@ -133,10 +132,159 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success("회원권 없음", null));
     }
 
+    /* ── 키핑권 ── */
+    @GetMapping("/members/{id}/keeping")
+    public ResponseEntity<ApiResponse<?>> getKeeping(@PathVariable Long id) {
+        Optional<KeepingMembership> opt = keepingMembershipRepository.findTopByMemberIdAndActiveTrueOrderByCreatedAtDesc(id);
+        if (opt.isPresent()) {
+            return ResponseEntity.ok(ApiResponse.success("키핑권 조회", buildKeepingMap(opt.get())));
+        }
+        return ResponseEntity.ok(ApiResponse.success("키핑권 없음", null));
+    }
+
+    @PostMapping("/members/{id}/keeping")
+    @Transactional
+    public ResponseEntity<ApiResponse<?>> assignKeeping(
+            @PathVariable Long id, @RequestBody KeepingAssignRequest request,
+            HttpServletRequest httpRequest) {
+        Admin admin = (Admin) httpRequest.getAttribute("currentAdmin");
+        Member member = memberService.getAllMembers(admin.getShop()).stream()
+                .filter(m -> m.getId().equals(id)).findFirst().orElse(null);
+        if (member == null) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("회원을 찾을 수 없습니다."));
+        }
+        if (request.getStartDate() == null) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("시작일을 입력해주세요."));
+        }
+        // 기존 키핑권 비활성화
+        keepingMembershipRepository.findByMemberIdAndActiveTrue(id)
+                .forEach(k -> k.setActive(false));
+
+        keepingMembershipRepository.save(KeepingMembership.builder()
+                .member(member)
+                .startDate(request.getStartDate())
+                .endDate(request.getEndDate())
+                .boardBrand(request.getBoardBrand())
+                .boardImageUrl(request.getBoardImageUrl())
+                .build());
+        return ResponseEntity.ok(ApiResponse.success("키핑권이 등록되었습니다."));
+    }
+
+    /* ── 회원권 만료 현황 ── */
+    @GetMapping("/expiry-dashboard")
+    @Transactional(readOnly = true)
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getExpiryDashboard(HttpServletRequest request) {
+        Admin admin = (Admin) request.getAttribute("currentAdmin");
+        SurfShop shop = admin.getShop();
+        LocalDate today = LocalDate.now();
+
+        List<Membership> activeMemberships = membershipRepository.findAllActiveByShop(shop);
+
+        List<Map<String, Object>> d7Members = new ArrayList<>();
+        List<Map<String, Object>> d30Members = new ArrayList<>();
+        int activeCount = 0;
+
+        for (Membership ms : activeMemberships) {
+            Map<String, Object> memberMap = buildExpiryMemberMap(ms, today);
+            if (ms.getType() == Membership.MembershipType.PERIOD) {
+                long daysLeft = ChronoUnit.DAYS.between(today, ms.getEndDate());
+                if (daysLeft < 0) continue;
+                if (daysLeft <= 7)  d7Members.add(memberMap);
+                else if (daysLeft <= 30) d30Members.add(memberMap);
+                else activeCount++;
+            } else {
+                int sessLeft = ms.getTotalSessions() - ms.getUsedSessions();
+                if (sessLeft <= 0) continue;
+                if (sessLeft <= 2)  d7Members.add(memberMap);
+                else if (sessLeft <= 5) d30Members.add(memberMap);
+                else activeCount++;
+            }
+        }
+
+        d7Members.sort(Comparator.comparingLong(m -> ((Number) ((Map<?,?>) m).get("sortKey")).longValue()));
+        d30Members.sort(Comparator.comparingLong(m -> ((Number) ((Map<?,?>) m).get("sortKey")).longValue()));
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("d7Count", d7Members.size());
+        data.put("d30Count", d30Members.size());
+        data.put("activeCount", activeCount);
+        data.put("d7Members", d7Members);
+        data.put("d30Members", d30Members);
+
+        return ResponseEntity.ok(ApiResponse.success("만료 현황 조회 성공", data));
+    }
+
+    private Map<String, Object> buildExpiryMemberMap(Membership ms, LocalDate today) {
+        Member member = ms.getMember();
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("memberId", member.getId());
+        map.put("name", member.getName());
+        map.put("phone", member.getPhone());
+        map.put("membershipType", ms.getType().getLabel());
+
+        if (ms.getType() == Membership.MembershipType.PERIOD) {
+            long daysLeft = ChronoUnit.DAYS.between(today, ms.getEndDate());
+            map.put("endDate", ms.getEndDate().toString());
+            map.put("daysLeft", daysLeft);
+            map.put("urgencyLabel", daysLeft <= 7 ? "D-" + daysLeft : daysLeft + "일 남음");
+            map.put("urgencyClass", daysLeft <= 7 ? "danger" : "warn");
+            map.put("sortKey", daysLeft);
+        } else {
+            int sessLeft = ms.getTotalSessions() - ms.getUsedSessions();
+            map.put("sessionsLeft", sessLeft);
+            map.put("totalSessions", ms.getTotalSessions());
+            map.put("urgencyLabel", sessLeft + "회 남음");
+            map.put("urgencyClass", sessLeft <= 2 ? "danger" : "warn");
+            map.put("sortKey", (long) sessLeft);
+        }
+        return map;
+    }
+
+    /* ── 알림 ── */
+    @GetMapping("/notifications")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getNotifications(HttpServletRequest request) {
+        Admin admin = (Admin) request.getAttribute("currentAdmin");
+        List<Notification> list = notificationService.getNotifications(admin.getShop());
+        List<Map<String, Object>> result = list.stream().map(n -> {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", n.getId());
+            map.put("type", n.getType().name());
+            map.put("typeLabel", n.getType().getLabel());
+            map.put("memberName", n.getMemberName());
+            map.put("lessonTitle", n.getLessonTitle());
+            map.put("lessonDate", n.getLessonDate());
+            map.put("message", n.getMessage());
+            map.put("read", n.isRead());
+            map.put("createdAt", n.getCreatedAt().toString());
+            return map;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(ApiResponse.success("알림 조회", result));
+    }
+
+    @GetMapping("/notifications/count")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getNotificationCount(HttpServletRequest request) {
+        Admin admin = (Admin) request.getAttribute("currentAdmin");
+        long count = notificationService.getUnreadCount(admin.getShop());
+        return ResponseEntity.ok(ApiResponse.success("안읽은 알림", Map.of("count", count)));
+    }
+
+    @PutMapping("/notifications/read-all")
+    public ResponseEntity<ApiResponse<?>> markAllRead(HttpServletRequest request) {
+        Admin admin = (Admin) request.getAttribute("currentAdmin");
+        notificationService.markAllRead(admin.getShop());
+        return ResponseEntity.ok(ApiResponse.success("전체 읽음 처리되었습니다."));
+    }
+
+    @PutMapping("/notifications/{id}/read")
+    public ResponseEntity<ApiResponse<?>> markRead(@PathVariable Long id) {
+        notificationService.markRead(id);
+        return ResponseEntity.ok(ApiResponse.success("읽음 처리되었습니다."));
+    }
+
+    /* ── 수업 ── */
     @PostMapping("/lessons")
     public ResponseEntity<ApiResponse<?>> createLesson(
-            @Valid @RequestBody LessonCreateRequest request,
-            HttpServletRequest httpRequest) {
+            @Valid @RequestBody LessonCreateRequest request, HttpServletRequest httpRequest) {
         Admin admin = (Admin) httpRequest.getAttribute("currentAdmin");
         ApiResponse<?> response = lessonService.createLesson(admin.getShop(), request);
         if (response.isSuccess()) return ResponseEntity.ok(response);
@@ -180,6 +328,17 @@ public class AdminController {
                     return mm;
                 }).collect(Collectors.toList());
 
+        List<Map<String, Object>> waitlist = waitlistRepository
+                .findByLessonAndStatusOrderByCreatedAtAsc(lesson, WaitlistEntry.WaitlistStatus.WAITING)
+                .stream().map(w -> {
+                    Map<String, Object> wm = new LinkedHashMap<>();
+                    wm.put("id", w.getId());
+                    wm.put("name", w.getMember().getName());
+                    wm.put("boardType", w.getMember().getBoardType().getLabel());
+                    wm.put("waitingSince", w.getCreatedAt().toString());
+                    return wm;
+                }).collect(Collectors.toList());
+
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("id", lesson.getId());
         result.put("title", lesson.getTitle());
@@ -190,6 +349,7 @@ public class AdminController {
         result.put("maxCapacity", lesson.getMaxCapacity());
         result.put("currentReservations", lesson.getCurrentReservations());
         result.put("members", memberList);
+        result.put("waitlist", waitlist);
         return ResponseEntity.ok(ApiResponse.success("수업 상세 조회", result));
     }
 
@@ -219,6 +379,7 @@ public class AdminController {
                 mapLessons(lessonService.getAllLessons(admin.getShop()))));
     }
 
+    /* ── Helpers ── */
     private Map<String, Object> buildMembershipMap(Membership ms) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", ms.getId());
@@ -235,6 +396,25 @@ public class AdminController {
             m.put("totalSessions", ms.getTotalSessions());
             m.put("usedSessions", ms.getUsedSessions());
             m.put("remainSessions", ms.getTotalSessions() - ms.getUsedSessions());
+        }
+        return m;
+    }
+
+    private Map<String, Object> buildKeepingMap(KeepingMembership k) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", k.getId());
+        m.put("startDate", k.getStartDate().toString());
+        m.put("endDate", k.getEndDate() != null ? k.getEndDate().toString() : null);
+        m.put("boardBrand", k.getBoardBrand());
+        m.put("boardImageUrl", k.getBoardImageUrl());
+        m.put("active", k.isActive());
+        if (k.getEndDate() != null) {
+            long remain = java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), k.getEndDate());
+            m.put("expired", remain < 0);
+            m.put("remainDays", Math.max(remain, 0));
+        } else {
+            m.put("expired", false);
+            m.put("remainDays", null);
         }
         return m;
     }

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SurfBook — 회원 마이페이지</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -26,6 +27,9 @@
 
         <!-- 회원권 카드 (클릭하면 수업예약 탭으로) -->
         <div id="membership-card" class="membership-card mt-16" style="cursor:pointer" onclick="switchMemberTab('reserve')" title="수업 예약하기"></div>
+
+        <!-- 키핑권 카드 -->
+        <div id="keeping-card" class="mt-8"></div>
 
         <!-- 탭 -->
         <div class="tabs mt-16">
@@ -80,6 +84,17 @@
 <footer style="text-align:center;padding:20px;color:var(--gray-400);font-size:12px">
     SurfBook © 2026 · 서핑샵 예약 관리 서비스
 </footer>
+
+<!-- ═══════════════════ D-7 만료 경고 모달 ═══════════════════ -->
+<div id="expiry-modal-overlay" class="expiry-modal-overlay hidden" onclick="closeExpiryModal()">
+    <div class="expiry-modal" onclick="event.stopPropagation()">
+        <div class="expiry-modal-icon">⚠️</div>
+        <h2 id="expiry-modal-title">회원권 만료 임박</h2>
+        <p id="expiry-modal-desc" style="font-size:14px;color:var(--fg-neutral-tertiary);line-height:1.6;margin:10px 0 16px"></p>
+        <div class="expiry-info-box" id="expiry-modal-info"></div>
+        <button class="btn btn-primary btn-block mt-16" onclick="closeExpiryModal()">확인했습니다</button>
+    </div>
+</div>
 
 <script src="/js/constants.js"></script>
 <script src="/js/member.js"></script>

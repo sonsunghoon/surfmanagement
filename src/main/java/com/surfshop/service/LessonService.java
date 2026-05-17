@@ -7,6 +7,7 @@ import com.surfshop.entity.SurfShop;
 import com.surfshop.entity.Member;
 import com.surfshop.repository.LessonRepository;
 import com.surfshop.repository.ReservationRepository;
+import com.surfshop.repository.WaitlistRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,7 @@ public class LessonService {
 
     private final LessonRepository lessonRepository;
     private final ReservationRepository reservationRepository;
+    private final WaitlistRepository waitlistRepository;
 
     @Transactional(readOnly = true)
     public List<Lesson> getTodayLessons(SurfShop shop) {
@@ -53,6 +55,7 @@ public class LessonService {
         for (Long id : ids) {
             lessonRepository.findById(id).ifPresent(lesson -> {
                 if (lesson.getShop().getId().equals(shop.getId())) {
+                    waitlistRepository.deleteAllByLesson(lesson);
                     reservationRepository.deleteAllByLesson(lesson);
                     lessonRepository.delete(lesson);
                 }

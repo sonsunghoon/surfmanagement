@@ -4,10 +4,9 @@ import com.surfshop.dto.ApiResponse;
 import com.surfshop.dto.MemberLoginRequest;
 import com.surfshop.dto.MemberLoginResponse;
 import com.surfshop.dto.MemberRegistrationRequest;
-import com.surfshop.entity.Lesson;
-import com.surfshop.entity.Member;
-import com.surfshop.entity.Membership;
-import com.surfshop.entity.Reservation;
+import com.surfshop.entity.*;
+import com.surfshop.repository.KeepingMembershipRepository;
+import com.surfshop.repository.WaitlistRepository;
 import com.surfshop.service.LessonService;
 import com.surfshop.service.MemberService;
 import com.surfshop.service.ReservationService;
@@ -34,6 +33,8 @@ public class GuestController {
     private final MemberService memberService;
     private final LessonService lessonService;
     private final ReservationService reservationService;
+    private final WaitlistRepository waitlistRepository;
+    private final KeepingMembershipRepository keepingMembershipRepository;
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<?>> register(@Valid @RequestBody MemberRegistrationRequest request) {
@@ -66,31 +67,27 @@ public class GuestController {
     @Transactional(readOnly = true)
     @GetMapping("/lessons/calendar")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getLessonsCalendar(
-            @RequestParam int year,
-            @RequestParam int month,
-            HttpServletRequest request) {
+            @RequestParam int year, @RequestParam int month, HttpServletRequest request) {
         Member member = (Member) request.getAttribute("currentMember");
-
         List<Lesson> lessons = lessonService.getLessonsForMonth(member.getShop(), year, month);
 
-        // 날짜별 그룹핑
         DateTimeFormatter dateFmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         Map<String, List<Map<String, Object>>> byDate = new LinkedHashMap<>();
 
         for (Lesson l : lessons) {
             String dateKey = l.getStartTime().toLocalDate().format(dateFmt);
             Optional<Reservation> myRes = reservationService.findConfirmedReservation(member, l);
+            Optional<WaitlistEntry> myWait = reservationService.findWaitlistEntry(member, l);
             byDate.computeIfAbsent(dateKey, k -> new ArrayList<>())
-                    .add(buildLessonMap(l, myRes.orElse(null)));
+                    .add(buildLessonMap(l, myRes.orElse(null), myWait.orElse(null)));
         }
 
-        // 이번 달 날짜 수 (캘린더 렌더용)
         YearMonth ym = YearMonth.of(year, month);
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("year", year);
         result.put("month", month);
         result.put("daysInMonth", ym.lengthOfMonth());
-        result.put("firstDayOfWeek", ym.atDay(1).getDayOfWeek().getValue() % 7); // 0=Sun
+        result.put("firstDayOfWeek", ym.atDay(1).getDayOfWeek().getValue() % 7);
         result.put("lessons", byDate);
 
         return ResponseEntity.ok(ApiResponse.success("달력 조회 성공", result));
@@ -106,7 +103,9 @@ public class GuestController {
             return ResponseEntity.badRequest().body(ApiResponse.error("수업을 찾을 수 없습니다."));
         }
         Optional<Reservation> myRes = reservationService.findConfirmedReservation(member, lesson);
-        return ResponseEntity.ok(ApiResponse.success("수업 조회 성공", buildLessonMap(lesson, myRes.orElse(null))));
+        Optional<WaitlistEntry> myWait = reservationService.findWaitlistEntry(member, lesson);
+        return ResponseEntity.ok(ApiResponse.success("수업 조회 성공",
+                buildLessonMap(lesson, myRes.orElse(null), myWait.orElse(null))));
     }
 
     /* ── 예약 ── */
@@ -131,6 +130,28 @@ public class GuestController {
         return ResponseEntity.badRequest().body(response);
     }
 
+    /* ── 예약 대기 신청 ── */
+    @PostMapping("/lessons/{id}/waitlist")
+    public ResponseEntity<ApiResponse<?>> joinWaitlist(
+            @PathVariable Long id, HttpServletRequest request) {
+        Member member = (Member) request.getAttribute("currentMember");
+        Lesson lesson = lessonService.findById(id).orElse(null);
+        if (lesson == null) return ResponseEntity.badRequest().body(ApiResponse.error("수업을 찾을 수 없습니다."));
+        ApiResponse<?> response = reservationService.joinWaitlist(member, lesson);
+        if (response.isSuccess()) return ResponseEntity.ok(response);
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    /* ── 예약 대기 취소 ── */
+    @DeleteMapping("/waitlist/{waitlistId}")
+    public ResponseEntity<ApiResponse<?>> cancelWaitlist(
+            @PathVariable Long waitlistId, HttpServletRequest request) {
+        Member member = (Member) request.getAttribute("currentMember");
+        ApiResponse<?> response = reservationService.cancelWaitlist(member, waitlistId);
+        if (response.isSuccess()) return ResponseEntity.ok(response);
+        return ResponseEntity.badRequest().body(response);
+    }
+
     /* ── 내 수업 목록 ── */
     @Transactional(readOnly = true)
     @GetMapping("/my-lessons")
@@ -141,7 +162,7 @@ public class GuestController {
         List<Map<String, Object>> result = reservations.stream().map(r -> {
             Lesson l = r.getLesson();
             boolean isPast = l.getStartTime().isBefore(java.time.LocalDateTime.now());
-            Map<String, Object> map = buildLessonMap(l, r);
+            Map<String, Object> map = buildLessonMap(l, r, null);
             map.put("reservationId", r.getId());
             map.put("reservedAt", r.getCreatedAt().toString());
             map.put("isPast", isPast);
@@ -151,7 +172,29 @@ public class GuestController {
         return ResponseEntity.ok(ApiResponse.success("나의 수업 목록", result));
     }
 
-    /* ── 내 예약 목록 ── */
+    /* ── 내 예약 대기 목록 ── */
+    @Transactional(readOnly = true)
+    @GetMapping("/my-waitlist")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getMyWaitlist(HttpServletRequest request) {
+        Member member = (Member) request.getAttribute("currentMember");
+        List<WaitlistEntry> entries = reservationService.getMyWaitlist(member);
+        List<Map<String, Object>> result = entries.stream().map(w -> {
+            Lesson l = w.getLesson();
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("waitlistId", w.getId());
+            map.put("lessonId", l.getId());
+            map.put("title", l.getTitle());
+            map.put("startTime", l.getStartTime().toString());
+            map.put("endTime", l.getEndTime().toString());
+            map.put("instructor", l.getInstructor());
+            map.put("waitingSince", w.getCreatedAt().toString());
+            map.put("isPast", l.getStartTime().isBefore(java.time.LocalDateTime.now()));
+            return map;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(ApiResponse.success("대기 목록", result));
+    }
+
+    /* ── 내 예약 목록 (stub) ── */
     @GetMapping("/reservations")
     public ResponseEntity<ApiResponse<?>> getMyReservations(HttpServletRequest request) {
         Member member = (Member) request.getAttribute("currentMember");
@@ -159,7 +202,9 @@ public class GuestController {
     }
 
     /* ── Helpers ── */
-    private Map<String, Object> buildLessonMap(Lesson l, Reservation myReservation) {
+    private Map<String, Object> buildLessonMap(Lesson l, Reservation myReservation, WaitlistEntry myWaitlist) {
+        long waitlistCount = waitlistRepository.findByLessonAndStatusOrderByCreatedAtAsc(
+                l, WaitlistEntry.WaitlistStatus.WAITING).size();
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("id", l.getId());
         map.put("title", l.getTitle());
@@ -178,6 +223,9 @@ public class GuestController {
         map.put("windInfo", l.getWindInfo());
         map.put("myReservationId", myReservation != null ? myReservation.getId() : null);
         map.put("reserved", myReservation != null);
+        map.put("onWaitlist", myWaitlist != null);
+        map.put("myWaitlistId", myWaitlist != null ? myWaitlist.getId() : null);
+        map.put("waitlistCount", waitlistCount);
         map.put("isPast", l.getStartTime().isBefore(java.time.LocalDateTime.now()));
         return map;
     }
@@ -215,6 +263,25 @@ public class GuestController {
             }
             data.put("membership", msData);
         }, () -> data.put("membership", null));
+
+        keepingMembershipRepository.findTopByMemberAndActiveTrueOrderByCreatedAtDesc(member)
+                .ifPresentOrElse(k -> {
+                    Map<String, Object> kData = new LinkedHashMap<>();
+                    kData.put("id", k.getId());
+                    kData.put("startDate", k.getStartDate().toString());
+                    kData.put("endDate", k.getEndDate() != null ? k.getEndDate().toString() : null);
+                    kData.put("boardBrand", k.getBoardBrand());
+                    kData.put("boardImageUrl", k.getBoardImageUrl());
+                    if (k.getEndDate() != null) {
+                        long remainDays = ChronoUnit.DAYS.between(LocalDate.now(), k.getEndDate());
+                        kData.put("expired", remainDays < 0);
+                        kData.put("remainDays", Math.max(remainDays, 0));
+                    } else {
+                        kData.put("expired", false);
+                        kData.put("remainDays", null);
+                    }
+                    data.put("keeping", kData);
+                }, () -> data.put("keeping", null));
 
         return data;
     }

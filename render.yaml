@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: surfshop-service
+    runtime: docker
+    plan: free
+    healthCheckPath: /guest.html
+    envVars:
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+
+databases:
+  - name: surfshop-db
+    plan: free
+    databaseName: surfshopdb
+    user: surfshop

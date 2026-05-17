@@ -6,7 +6,10 @@ let currentToken = null;
 let currentTab   = 'members';
 let memberFilter = 'ALL';
 let modalMemberId = null;
+let keepingMemberId = null;
 let selectedLessons = new Set();
+let notifPanelOpen = false;
+let notifPollTimer = null;
 
 /* ── Storage ── */
 const store = {
@@ -33,7 +36,7 @@ const show = (id) => $(id).classList.remove('hidden');
 const hide = (id) => $(id).classList.add('hidden');
 
 function escapeHtml(str) {
-    return String(str).replace(/[&<>"']/g, c =>
+    return String(str ?? '').replace(/[&<>"']/g, c =>
         ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
@@ -78,6 +81,7 @@ function showDashboard() {
     $('header-email').textContent = store.get('EMAIL') || '';
     loadDashboardStats();
     switchTab('members');
+    startNotifPoll();
 }
 
 async function loadDashboardStats() {
@@ -88,6 +92,7 @@ async function loadDashboardStats() {
         $('stat-pending').textContent  = d.pendingCount   ?? '-';
         $('stat-approved').textContent = d.approvedCount  ?? '-';
         $('stat-lessons').textContent  = d.todayLessonCount ?? '-';
+        updateNotifBadge(d.unreadNotifications ?? 0);
     } catch { /* silent */ }
 }
 
@@ -95,10 +100,11 @@ async function loadDashboardStats() {
 function switchTab(tab) {
     currentTab = tab;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-    hide('tab-members'); hide('tab-lessons');
+    hide('tab-members'); hide('tab-lessons'); hide('tab-expiry');
     show(`tab-${tab}`);
     if (tab === 'members') loadMembers();
     if (tab === 'lessons') loadLessons();
+    if (tab === 'expiry') loadExpiryDashboard();
 }
 
 /* ── Members ── */
@@ -131,10 +137,14 @@ function renderMemberItem(m) {
     }
 
     const membershipHtml = renderMembershipBadge(m.membership);
+    const keepingHtml = m.keeping ? renderKeepingBadge(m.keeping) : '';
 
     const membershipBtn = m.statusCode === C.STATUS.APPROVED
         ? `<button class="btn btn-outline btn-sm" onclick="openMembershipModal(${m.id}, '${escapeHtml(m.name)}')">
                ${m.membership ? '회원권 변경' : '회원권 부여'}
+           </button>
+           <button class="btn btn-outline btn-sm" style="color:#3B82F6;border-color:#3B82F6" onclick="openKeepingModal(${m.id}, '${escapeHtml(m.name)}')">
+               ${m.keeping ? '키핑권 변경' : '키핑권 부여'}
            </button>`
         : '';
 
@@ -145,12 +155,17 @@ function renderMemberItem(m) {
                 <div class="member-name">${escapeHtml(m.name)}</div>
                 <div class="member-meta">
                     <span>${escapeHtml(m.phone)}</span>
+                    <span style="color:var(--gray-300)">·</span>
                     <span>${escapeHtml(m.boardType)}</span>
+                    <span style="color:var(--gray-300)">·</span>
                     <span>${escapeHtml(m.surfLevel)}</span>
+                </div>
+                <div class="member-meta" style="margin-top:5px">
                     <span class="badge ${badgeClass}">${escapeHtml(m.status)}</span>
                     ${membershipHtml}
+                    ${keepingHtml}
                 </div>
-                <div class="text-muted mt-4">${escapeHtml(m.email)}</div>
+                <div style="font-size:11px;color:var(--fg-neutral-tertiary);margin-top:3px">${escapeHtml(m.email)}</div>
             </div>
             <div class="member-actions">
                 ${approveRejectBtns}
@@ -163,14 +178,20 @@ function renderMembershipBadge(ms) {
     if (!ms) return '<span class="badge badge-no-ms">회원권 없음</span>';
     if (ms.type === 'PERIOD') {
         const expired = ms.expired;
-        const remain = ms.remainDays;
         if (expired) return '<span class="badge badge-ms-expired">기간권 만료</span>';
-        return `<span class="badge badge-ms-period">기간권 · ${remain}일 남음</span>`;
+        return `<span class="badge badge-ms-period">기간권 · ${ms.remainDays}일 남음</span>`;
     } else {
         const remain = ms.remainSessions;
         if (remain === 0) return '<span class="badge badge-ms-expired">횟수권 소진</span>';
         return `<span class="badge badge-ms-session">횟수권 · ${remain}회 남음</span>`;
     }
+}
+
+function renderKeepingBadge(k) {
+    if (!k) return '';
+    if (k.expired) return '<span class="badge badge-ms-expired">키핑권 만료</span>';
+    const remain = k.remainDays !== null ? ` · ${k.remainDays}일 남음` : '';
+    return `<span class="badge" style="background:#EFF6FF;color:#3B82F6;border:1px solid #BFDBFE">🏄‍♂️ 키핑권${remain}</span>`;
 }
 
 async function approveMember(id) {
@@ -271,7 +292,7 @@ function renderLessonCard(l) {
                     <span class="badge ${typeClass}">${escapeHtml(l.lessonType)}</span>
                 </div>
                 <div class="lesson-meta">
-                    <span>🕐 ${start} ~ ${end}</span>
+                    <span>⏱ ${start} ~ ${end}</span>
                     <span>👤 ${escapeHtml(l.instructor || '-')}</span>
                     ${tags}
                 </div>
@@ -280,8 +301,7 @@ function renderLessonCard(l) {
                     <div class="capacity-bar">
                         <div class="capacity-fill ${fillClass}" style="width:${fillWidth}%"></div>
                     </div>
-                    <div class="capacity-text">${l.currentReservations}/${l.maxCapacity}명
-                        ${isFull ? '<span class="badge badge-rejected" style="margin-left:4px">마감</span>' : ''}</div>
+                    <div class="capacity-text">${l.currentReservations}/${l.maxCapacity}명${isFull ? ' · <span style="color:var(--danger);font-weight:600">마감</span>' : ''}</div>
                 </div>
             </div>
         </div>`;
@@ -295,6 +315,11 @@ function formatDate(isoString) {
 function formatTime(isoString) {
     const d = new Date(isoString);
     return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+function formatDateTime(isoString) {
+    const d = new Date(isoString);
+    return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 }
 
 /* ── Membership Modal ── */
@@ -314,7 +339,6 @@ function renderMembershipForm(ms) {
     const today = new Date().toISOString().split('T')[0];
 
     if (!ms) {
-        // ── 신규 발급 폼 ──
         $('modal-body').innerHTML = `
             <div id="modal-alert" class="alert alert-danger hidden"></div>
             <div class="form-group">
@@ -354,7 +378,6 @@ function renderMembershipForm(ms) {
     }
 
     if (ms.type === 'PERIOD') {
-        // ── 기간권 수정 폼 ──
         const expired = ms.expired;
         $('modal-body').innerHTML = `
             <div id="modal-alert" class="alert alert-danger hidden"></div>
@@ -377,7 +400,6 @@ function renderMembershipForm(ms) {
         $('btn-assign-ms').textContent = '기간 변경';
         $('btn-assign-ms').onclick = submitModifyPeriod;
     } else {
-        // ── 횟수권 수정 폼 ──
         const remain = ms.remainSessions;
         $('modal-body').innerHTML = `
             <div id="modal-alert" class="alert alert-danger hidden"></div>
@@ -416,10 +438,9 @@ function onNewTypeChange() {
 
 function switchToNewMembership(currentType) {
     const today = new Date().toISOString().split('T')[0];
-    const otherType = currentType === 'PERIOD' ? 'SESSION' : 'PERIOD';
     $('modal-body').innerHTML = `
         <div id="modal-alert" class="alert alert-danger hidden"></div>
-        <div class="alert" style="background:var(--warn-bg,#FFF9E6);border:1px solid #F5C518;border-radius:var(--radius);padding:10px 14px;font-size:13px;margin-bottom:14px">
+        <div class="alert" style="background:#FFF9E6;border:1px solid #F5C518;border-radius:var(--radius);padding:10px 14px;font-size:13px;margin-bottom:14px">
             ⚠️ 기존 회원권이 비활성화되고 새로 발급됩니다.
         </div>
         <div class="form-group">
@@ -519,6 +540,92 @@ function closeModal() {
     modalMemberId = null;
 }
 
+/* ── Keeping Modal ── */
+async function openKeepingModal(memberId, memberName) {
+    keepingMemberId = memberId;
+    $('keeping-modal-title').textContent = `${memberName} — 키핑권`;
+    $('keeping-modal-body').innerHTML = '<div class="text-center"><span class="spinner dark"></span></div>';
+    show('keeping-modal-overlay');
+
+    const data = await api(C.API.ADMIN_KEEPING(memberId));
+    const k = (data?.success) ? data.data : null;
+    renderKeepingForm(k);
+}
+
+function renderKeepingForm(k) {
+    const today = new Date().toISOString().split('T')[0];
+    $('keeping-modal-body').innerHTML = `
+        <div id="keeping-modal-alert" class="alert alert-danger hidden"></div>
+        ${k ? `<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:var(--radius);padding:12px 14px;margin-bottom:16px;font-size:13px">
+            <div style="font-weight:700;margin-bottom:4px">🏄‍♂️ 현재 키핑권</div>
+            <div>${k.boardBrand ? `브랜드: ${escapeHtml(k.boardBrand)} &nbsp;|&nbsp; ` : ''}${escapeHtml(k.startDate)} ~ ${k.endDate ? escapeHtml(k.endDate) : '종료일 없음'}
+            ${k.expired ? '<span style="color:var(--danger);margin-left:8px">만료됨</span>' : ''}</div>
+            ${k.boardImageUrl ? `<img src="${escapeHtml(k.boardImageUrl)}" style="height:60px;margin-top:8px;border-radius:4px" onerror="this.style.display='none'">` : ''}
+        </div>` : ''}
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">시작일 <span class="required">*</span></label>
+                <input type="date" id="k-start" class="form-control" value="${today}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">종료일</label>
+                <input type="date" id="k-end" class="form-control" value="${k?.endDate || ''}">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">보드 브랜드</label>
+            <input type="text" id="k-brand" class="form-control" placeholder="예: Firewire, JS Industries" value="${escapeHtml(k?.boardBrand || '')}">
+        </div>
+        <div class="form-group">
+            <label class="form-label">보드 사진 URL</label>
+            <input type="url" id="k-image" class="form-control" placeholder="https://example.com/board.jpg" value="${escapeHtml(k?.boardImageUrl || '')}">
+            <div style="font-size:12px;color:var(--gray-500);margin-top:4px">이미지 URL을 입력하면 회원 화면에 사진이 표시됩니다.</div>
+        </div>`;
+    $('btn-save-keeping').textContent = k ? '키핑권 변경' : '키핑권 등록';
+    $('btn-save-keeping').onclick = submitKeeping;
+}
+
+async function submitKeeping() {
+    const startDate = $('k-start')?.value;
+    if (!startDate) { showKeepingAlert('시작일을 입력해주세요.'); return; }
+
+    const body = {
+        startDate,
+        endDate: $('k-end')?.value || null,
+        boardBrand: $('k-brand')?.value.trim() || null,
+        boardImageUrl: $('k-image')?.value.trim() || null,
+    };
+
+    const btn = $('btn-save-keeping');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+    try {
+        const data = await api(C.API.ADMIN_KEEPING(keepingMemberId), {
+            method: 'POST',
+            body: JSON.stringify(body),
+        });
+        if (data?.success) {
+            closeKeepingModal();
+            loadMembers();
+        } else {
+            showKeepingAlert(data?.message || '오류가 발생했습니다.');
+            btn.disabled = false; btn.textContent = '등록';
+        }
+    } catch {
+        showKeepingAlert(C.MESSAGES.NETWORK_ERROR);
+        btn.disabled = false; btn.textContent = '등록';
+    }
+}
+
+function showKeepingAlert(msg) {
+    const el = $('keeping-modal-alert');
+    if (el) { el.textContent = msg; el.classList.remove('hidden'); }
+}
+
+function closeKeepingModal() {
+    hide('keeping-modal-overlay');
+    keepingMemberId = null;
+}
+
 /* ── Lesson Modal ── */
 function openLessonModal() {
     hide('lesson-modal-alert');
@@ -598,6 +705,8 @@ async function openLessonDetail(id) {
     $('lesson-detail-title').textContent = l.title;
 
     const members = l.members || [];
+    const waitlist = l.waitlist || [];
+
     let membersHtml;
     if (!members.length) {
         membersHtml = '<div class="empty-state" style="padding:20px 0"><div class="empty-icon">👥</div><p>예약한 회원이 없습니다.</p></div>';
@@ -617,6 +726,24 @@ async function openLessonDetail(id) {
             </table>`;
     }
 
+    let waitlistHtml = '';
+    if (waitlist.length > 0) {
+        waitlistHtml = `
+            <div style="font-size:14px;font-weight:700;margin:16px 0 10px">⏳ 예약 대기 (${waitlist.length}명)</div>
+            <table class="detail-table">
+                <thead><tr><th>순서</th><th>이름</th><th>보드</th><th>대기 신청일시</th></tr></thead>
+                <tbody>
+                    ${waitlist.map((w, i) => `
+                        <tr>
+                            <td style="font-weight:700;color:var(--primary)">${i+1}번</td>
+                            <td style="font-weight:600">${escapeHtml(w.name)}</td>
+                            <td>${escapeHtml(w.boardType)}</td>
+                            <td style="font-size:12px;color:var(--gray-500)">${escapeHtml(formatDateTime(w.waitingSince))}</td>
+                        </tr>`).join('')}
+                </tbody>
+            </table>`;
+    }
+
     $('lesson-detail-body').innerHTML = `
         <div class="info-grid" style="margin-bottom:16px">
             <div class="info-row"><span class="info-label">일시</span><span class="info-value">${escapeHtml(formatDate(l.startTime))} ${escapeHtml(formatTime(l.startTime))} ~ ${escapeHtml(formatTime(l.endTime))}</span></div>
@@ -625,13 +752,191 @@ async function openLessonDetail(id) {
             <div class="info-row"><span class="info-label">정원</span><span class="info-value">${l.currentReservations} / ${l.maxCapacity}명</span></div>
         </div>
         <div style="font-size:14px;font-weight:700;margin-bottom:10px">📋 신청 회원 (${members.length}명)</div>
-        ${membersHtml}`;
+        ${membersHtml}
+        ${waitlistHtml}`;
 }
 
 function closeLessonDetail() { hide('lesson-detail-overlay'); }
 
+/* ═══════════════════
+   알림 시스템
+═══════════════════ */
+function updateNotifBadge(count) {
+    const badge = $('notif-badge');
+    if (count > 0) {
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.classList.remove('hidden');
+    } else {
+        badge.classList.add('hidden');
+    }
+}
+
+function startNotifPoll() {
+    pollNotifCount();
+    notifPollTimer = setInterval(pollNotifCount, 30000);
+}
+
+async function pollNotifCount() {
+    try {
+        const data = await api(C.API.ADMIN_NOTIFICATIONS_COUNT);
+        if (data?.success) updateNotifBadge(data.data.count);
+    } catch { /* silent */ }
+}
+
+async function toggleNotifPanel() {
+    notifPanelOpen = !notifPanelOpen;
+    if (notifPanelOpen) {
+        show('notif-panel');
+        await loadNotifications();
+    } else {
+        hide('notif-panel');
+    }
+}
+
+async function loadNotifications() {
+    $('notif-list').innerHTML = '<div class="text-center" style="padding:20px"><span class="spinner dark"></span></div>';
+    const data = await api(C.API.ADMIN_NOTIFICATIONS);
+    if (!data || !data.success) {
+        $('notif-list').innerHTML = '<div style="padding:16px;text-align:center;color:var(--gray-500)">알림을 불러오지 못했습니다.</div>';
+        return;
+    }
+    const notifs = data.data;
+    if (!notifs.length) {
+        $('notif-list').innerHTML = '<div style="padding:24px;text-align:center;color:var(--gray-500)">알림이 없습니다.</div>';
+        return;
+    }
+    const typeIcon = { RESERVATION: '📅', CANCELLATION: '❌', NEW_MEMBER: '👋', WAITLIST_PROMOTED: '✅' };
+    $('notif-list').innerHTML = notifs.map(n => `
+        <div class="notif-item ${n.read ? 'notif-read' : 'notif-unread'}" onclick="readNotif(${n.id}, this)">
+            <span class="notif-icon">${typeIcon[n.type] || '🔔'}</span>
+            <div class="notif-content">
+                <div class="notif-msg">${escapeHtml(n.message)}</div>
+                <div class="notif-time">${escapeHtml(formatDateTime(n.createdAt))}</div>
+            </div>
+            ${!n.read ? '<span class="notif-dot"></span>' : ''}
+        </div>`).join('');
+}
+
+async function readNotif(id, el) {
+    await api(C.API.ADMIN_NOTIFICATION_READ(id), { method: 'PUT' });
+    el.classList.remove('notif-unread');
+    el.classList.add('notif-read');
+    el.querySelector('.notif-dot')?.remove();
+    pollNotifCount();
+}
+
+async function markAllNotifRead() {
+    await api(C.API.ADMIN_NOTIFICATIONS_READ_ALL, { method: 'PUT' });
+    await loadNotifications();
+    updateNotifBadge(0);
+}
+
+/* ═══════════════════
+   회원권 만료 대시보드
+═══════════════════ */
+let expiryCache = null;
+let currentExpirySegment = 'd7';
+
+async function loadExpiryDashboard() {
+    const container = $('expiry-dashboard-content');
+    container.innerHTML = '<div class="text-center mt-16"><span class="spinner dark"></span></div>';
+    try {
+        const data = await api(C.API.ADMIN_EXPIRY_DASHBOARD);
+        if (!data || !data.success) {
+            container.innerHTML = '<div class="alert alert-danger">만료 현황을 불러오지 못했습니다.</div>';
+            return;
+        }
+        expiryCache = data.data;
+        renderExpiryDashboard(expiryCache, 'd7');
+    } catch {
+        container.innerHTML = `<div class="alert alert-danger">${C.MESSAGES.NETWORK_ERROR}</div>`;
+    }
+}
+
+function renderExpiryDashboard(d, activeSegment) {
+    const container = $('expiry-dashboard-content');
+    container.innerHTML = `
+        <div class="seg-tiles">
+            <div class="seg-tile danger ${activeSegment === 'd7' ? 'active' : ''}" id="seg-d7" onclick="showExpirySegment('d7')">
+                <div class="seg-num">${d.d7Count}</div>
+                <div class="seg-label">D-7 이내 만료</div>
+                <div class="seg-sub">긴급 연락 필요</div>
+            </div>
+            <div class="seg-tile warn ${activeSegment === 'd30' ? 'active' : ''}" id="seg-d30" onclick="showExpirySegment('d30')">
+                <div class="seg-num">${d.d30Count}</div>
+                <div class="seg-label">D-30 이내 만료</div>
+                <div class="seg-sub">갱신 안내 필요</div>
+            </div>
+            <div class="seg-tile safe ${activeSegment === 'active' ? 'active' : ''}" id="seg-active" onclick="showExpirySegment('active')">
+                <div class="seg-num">${d.activeCount}</div>
+                <div class="seg-label">활성 회원</div>
+                <div class="seg-sub">잔여 충분</div>
+            </div>
+        </div>
+        <div id="expiry-member-section" class="mt-8"></div>`;
+    showExpirySegment(activeSegment);
+}
+
+function showExpirySegment(segment) {
+    if (!expiryCache) return;
+    currentExpirySegment = segment;
+    document.querySelectorAll('.seg-tile').forEach(t => t.classList.remove('active'));
+    const tileEl = $(`seg-${segment}`);
+    if (tileEl) tileEl.classList.add('active');
+
+    const section = $('expiry-member-section');
+    if (segment === 'active') {
+        section.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><p>활성 회원 ${expiryCache.activeCount}명은 회원권 잔여가 충분합니다.</p></div>`;
+        return;
+    }
+
+    const members = segment === 'd7' ? expiryCache.d7Members : expiryCache.d30Members;
+    const title   = segment === 'd7' ? '🔴 D-7 이내 만료 회원' : '🟡 D-30 이내 만료 회원';
+
+    if (!members.length) {
+        section.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><p>해당 구간의 회원이 없습니다.</p></div>`;
+        return;
+    }
+
+    section.innerHTML = `
+        <div class="card">
+            <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+                <span>${title}</span>
+                <span style="font-size:12px;color:var(--gray-500)">${members.length}명</span>
+            </div>
+            <ul class="member-list">${members.map(renderExpiryMemberRow).join('')}</ul>
+        </div>`;
+}
+
+function renderExpiryMemberRow(m) {
+    const isPeriod = m.membershipType === 'PERIOD';
+    const msType   = isPeriod ? '기간권' : '횟수권';
+    const detail   = isPeriod
+        ? `만료일 ${escapeHtml(m.endDate)} · ${m.daysLeft}일 남음`
+        : `잔여 ${m.sessionsLeft}회 / 총 ${m.totalSessions}회`;
+    const badgeCls = m.urgencyClass === 'danger' ? 'expiry-urgency-badge danger' : 'expiry-urgency-badge warn';
+    const msBadgeCls = isPeriod ? 'badge-ms-period' : 'badge-ms-session';
+
+    return `
+        <li class="member-item">
+            <div class="member-avatar">${escapeHtml(m.name.charAt(0))}</div>
+            <div class="member-info">
+                <div class="member-name">${escapeHtml(m.name)}</div>
+                <div class="member-meta">${escapeHtml(m.phone)}</div>
+                <div class="member-meta" style="margin-top:4px">
+                    <span class="badge ${msBadgeCls}">${msType}</span>
+                    <span>${escapeHtml(detail)}</span>
+                </div>
+            </div>
+            <div style="flex-shrink:0">
+                <span class="${badgeCls}">${escapeHtml(m.urgencyLabel)}</span>
+            </div>
+        </li>`;
+}
+
 /* ── Logout ── */
 async function logout() {
+    if (notifPollTimer) clearInterval(notifPollTimer);
     if (currentToken) {
         try { await api(C.API.ADMIN_LOGOUT, { method: 'POST' }); } catch { /* ignore */ }
     }
@@ -641,12 +946,24 @@ async function logout() {
     show('login-view');
     $('login-form').reset();
     hide('login-error');
+    notifPanelOpen = false;
 }
 
 /* ── Helpers ── */
 function emptyState(msg) {
     return `<div class="empty-state"><div class="empty-icon">📋</div><p>${escapeHtml(msg)}</p></div>`;
 }
+
+/* ── Close panel when clicking outside ── */
+document.addEventListener('click', (e) => {
+    if (!notifPanelOpen) return;
+    const panel = $('notif-panel');
+    const btn   = $('btn-notifications');
+    if (panel && btn && !panel.contains(e.target) && !btn.contains(e.target)) {
+        hide('notif-panel');
+        notifPanelOpen = false;
+    }
+});
 
 /* ── Init ── */
 document.addEventListener('DOMContentLoaded', () => {
@@ -663,6 +980,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadDashboardStats();
         if (currentTab === 'members') loadMembers();
         if (currentTab === 'lessons') loadLessons();
+        if (currentTab === 'expiry') loadExpiryDashboard();
     });
     $('btn-create-lesson').addEventListener('click', openLessonModal);
     $('btn-save-lesson').addEventListener('click', saveLesson);

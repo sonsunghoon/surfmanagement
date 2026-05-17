@@ -38,6 +38,7 @@ public class MemberService {
     private final MembershipRepository membershipRepository;
     private final SurfShopRepository surfShopRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final NotificationService notificationService;
 
     @Transactional
     public ApiResponse<?> register(MemberRegistrationRequest request) {
@@ -62,6 +63,7 @@ public class MemberService {
                 .build();
 
         memberRepository.save(member);
+        notificationService.createNewMember(shop, request.getName());
         return ApiResponse.success(MSG_REGISTER_SUCCESS);
     }
 

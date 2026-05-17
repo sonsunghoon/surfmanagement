@@ -25,9 +25,12 @@ public class WebConfig implements WebMvcConfigurer {
                     "/api/members/lessons/calendar",
                     "/api/members/lessons/*",
                     "/api/members/lessons/*/reserve",
+                    "/api/members/lessons/*/waitlist",
                     "/api/members/reservations",
                     "/api/members/reservations/*",
-                    "/api/members/my-lessons"
+                    "/api/members/waitlist/*",
+                    "/api/members/my-lessons",
+                    "/api/members/my-waitlist"
                 );
     }
 }
