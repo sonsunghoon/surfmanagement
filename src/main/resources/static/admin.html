@@ -78,9 +78,12 @@
 <div id="dashboard-view" class="admin-layout hidden">
     <header class="app-header">
         <div class="logo"><span class="wave-icon">🌊</span> SurfBook</div>
-        <div class="header-right">
+        <div class="header-right" style="display:flex;align-items:center;gap:12px">
             <span id="header-shop" style="font-weight:600"></span>
             <span id="header-email" style="opacity:0.75"></span>
+            <button class="btn btn-ghost btn-sm" id="btn-notifications" title="알림" onclick="toggleNotifPanel()" style="position:relative;color:#fff">🔔<span id="notif-badge" class="hidden" style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border-radius:999px;font-size:10px;font-weight:700;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px"></span></button>
+            <button class="btn btn-ghost btn-sm" id="btn-refresh" title="새로고침" style="color:#fff">↺</button>
+            <button class="btn btn-ghost btn-sm" id="btn-logout" style="color:#fff">로그아웃</button>
         </div>
     </header>
 
@@ -130,11 +133,6 @@
         <div class="topbar">
           <div class="topbar-search">
             <button class="btn btn-ghost btn-sm">🔍 검색</button>
-          </div>
-          <div class="topbar-actions">
-            <button class="btn btn-ghost btn-sm" id="btn-notifications" title="알림" onclick="toggleNotifPanel()" style="position:relative">🔔<span id="notif-badge" class="hidden" style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border-radius:999px;font-size:10px;font-weight:700;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px"></span></button>
-            <button class="btn btn-ghost btn-sm" id="btn-refresh" title="새로고침">↺</button>
-            <button class="btn btn-ghost btn-sm" id="btn-logout">로그아웃</button>
           </div>
         </div>
 
