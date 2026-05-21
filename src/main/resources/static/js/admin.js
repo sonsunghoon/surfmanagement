@@ -163,6 +163,7 @@ async function loadDashboardStats() {
         $('stat-pending').textContent  = pending;
         $('stat-approved').textContent = d.approvedCount  ?? '-';
         $('stat-lessons').textContent  = d.todayLessonCount ?? '-';
+        $('stat-week-participants').textContent = d.weekParticipants ?? '-';
         // Sidebar badge for pending count
         const badge = $('sidebar-badge-pending');
         if (badge) {
