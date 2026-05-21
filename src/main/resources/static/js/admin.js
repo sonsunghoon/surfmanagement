@@ -149,6 +149,16 @@ function showDashboard() {
     if (sidebarShop)  sidebarShop.textContent  = shopName;
     if (sidebarEmail) sidebarEmail.textContent = email;
     if (sidebarAva && shopName) sidebarAva.textContent = shopName.substring(0, 2);
+
+    const dashShop = $('dashboard-shop-name');
+    if (dashShop) dashShop.textContent = shopName;
+    const dashDate = $('dashboard-date');
+    if (dashDate) {
+        const now = new Date();
+        const days = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
+        dashDate.textContent = `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 ${days[now.getDay()]}`;
+    }
+
     loadDashboardStats();
     switchTab('members');
     startNotifPoll();
