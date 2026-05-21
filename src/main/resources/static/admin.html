@@ -132,11 +132,20 @@
             <input type="search" class="search-input" placeholder="회원·수업·예약 검색..." />
           </div>
           <div class="topbar-actions">
-            <button class="btn btn-ghost btn-sm" id="btn-notifications" title="알림" onclick="toggleNotifPanel()">🔔</button>
+            <button class="btn btn-ghost btn-sm" id="btn-notifications" title="알림" onclick="toggleNotifPanel()" style="position:relative">🔔<span id="notif-badge" class="hidden" style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border-radius:999px;font-size:10px;font-weight:700;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px"></span></button>
             <button class="btn btn-ghost btn-sm" id="btn-refresh" title="새로고침">↺</button>
             <button class="btn btn-ghost btn-sm" id="btn-logout">로그아웃</button>
             <button class="btn btn-primary btn-sm" id="btn-create-lesson">수업 만들기</button>
           </div>
+        </div>
+
+        <!-- 알림 패널 -->
+        <div id="notif-panel" class="hidden" style="position:fixed;top:60px;right:16px;width:340px;max-height:480px;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.15);z-index:1000;display:flex;flex-direction:column;overflow:hidden">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line-soft)">
+                <span style="font-weight:700;font-size:15px">알림</span>
+                <button class="btn btn-ghost btn-sm" onclick="markAllNotifRead()">모두 읽음</button>
+            </div>
+            <div id="notif-list" style="overflow-y:auto;flex:1"></div>
         </div>
 
         <div class="admin-content">
