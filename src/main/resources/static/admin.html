@@ -15,22 +15,62 @@
         <div class="login-logo">
             <div class="logo-mark">🌊</div>
             <h1>SurfBook</h1>
-            <p>서핑샵 관리자 로그인</p>
+            <p>서핑샵 관리자</p>
         </div>
-        <div id="login-error" class="alert alert-danger hidden"></div>
-        <form id="login-form" novalidate>
-            <div class="form-group">
-                <label class="form-label" for="admin-email">이메일</label>
-                <input type="email" id="admin-email" class="form-control" placeholder="admin@surfshop.com" autocomplete="email" required>
-            </div>
-            <div class="form-group">
-                <label class="form-label" for="admin-password">비밀번호</label>
-                <input type="password" id="admin-password" class="form-control" placeholder="비밀번호 입력" autocomplete="current-password" required>
-            </div>
-            <button type="submit" class="btn btn-primary btn-lg btn-block mt-16" id="btn-login">로그인</button>
-        </form>
-        <div class="divider"></div>
-        <p class="text-muted text-center">테스트 계정: admin@yangyang.com / admin123</p>
+
+        <div class="tabs mb-16">
+            <button class="tab-btn active" id="tab-btn-login" onclick="switchAdminTab('login')">로그인</button>
+            <button class="tab-btn" id="tab-btn-register" onclick="switchAdminTab('register')">샵 등록</button>
+        </div>
+
+        <!-- 로그인 폼 -->
+        <div id="admin-login-section">
+            <div id="login-error" class="alert alert-danger hidden"></div>
+            <form id="login-form" novalidate>
+                <div class="form-group">
+                    <label class="form-label" for="admin-email">이메일</label>
+                    <input type="email" id="admin-email" class="form-control" placeholder="admin@surfshop.com" autocomplete="email" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="admin-password">비밀번호</label>
+                    <input type="password" id="admin-password" class="form-control" placeholder="비밀번호 입력" autocomplete="current-password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg btn-block mt-16" id="btn-login">로그인</button>
+            </form>
+        </div>
+
+        <!-- 샵 등록 폼 -->
+        <div id="admin-register-section" class="hidden">
+            <div id="admin-reg-error" class="alert alert-danger hidden"></div>
+            <form id="admin-reg-form" novalidate>
+                <div class="form-group">
+                    <label class="form-label" for="ar-shop-name">서핑샵 이름 <span class="required">*</span></label>
+                    <input type="text" id="ar-shop-name" class="form-control" placeholder="예) 양양 서핑클럽" maxlength="50" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="ar-shop-location">서핑샵 위치 <span class="required">*</span></label>
+                    <input type="text" id="ar-shop-location" class="form-control" placeholder="예) 강원도 양양군 현남면" maxlength="100" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="ar-shop-desc">샵 소개 <span style="color:var(--gray-400);font-weight:400">(선택)</span></label>
+                    <input type="text" id="ar-shop-desc" class="form-control" placeholder="한 줄 소개" maxlength="200">
+                </div>
+                <div style="height:1px;background:var(--line-soft);margin:16px 0"></div>
+                <div class="form-group">
+                    <label class="form-label" for="ar-email">관리자 이메일 <span class="required">*</span></label>
+                    <input type="email" id="ar-email" class="form-control" placeholder="admin@myshop.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="ar-password">비밀번호 <span class="required">*</span></label>
+                    <input type="password" id="ar-password" class="form-control" placeholder="8자 이상" minlength="8" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="ar-password2">비밀번호 확인 <span class="required">*</span></label>
+                    <input type="password" id="ar-password2" class="form-control" placeholder="비밀번호 재입력" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg btn-block mt-16" id="btn-admin-reg">서핑샵 개설하기</button>
+            </form>
+        </div>
     </div>
 </div>
 

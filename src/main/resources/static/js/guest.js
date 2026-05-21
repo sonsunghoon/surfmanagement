@@ -35,7 +35,6 @@ function switchMainTab(tab) {
     });
     hide('tab-register');
     hide('tab-login');
-    hide('tab-admin-register');
     show(`tab-${tab}`);
 
     if (tab === 'login') loadLoginShops();
@@ -258,7 +257,7 @@ function escapeAttr(str) { return String(str).replace(/'/g, "\\'"); }
 
 /* ── Init ── */
 document.addEventListener('DOMContentLoaded', () => {
-    loadShops();
+    loadLoginShops();
     updateStepIndicator('shop');
 
     document.querySelectorAll('.tabs .tab-btn').forEach(btn => {
@@ -276,7 +275,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     $('reg-form').addEventListener('submit', submitRegistration);
     $('login-form').addEventListener('submit', submitLogin);
-    $('admin-reg-form').addEventListener('submit', submitAdminRegister);
     $('btn-pending-back').addEventListener('click', () => {
         hide('pending-section');
         show('login-section');
