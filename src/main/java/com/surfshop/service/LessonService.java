@@ -50,6 +50,15 @@ public class LessonService {
         return lessonRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
+    public int getWeekParticipants(SurfShop shop) {
+        LocalDate today = LocalDate.now();
+        LocalDate weekStart = today.with(java.time.DayOfWeek.MONDAY);
+        return lessonRepository.findByShopAndStartTimeBetweenOrderByStartTimeAsc(
+                shop, weekStart.atStartOfDay(), today.atTime(LocalTime.MAX))
+                .stream().mapToInt(Lesson::getCurrentReservations).sum();
+    }
+
     @Transactional
     public void deleteLessons(List<Long> ids, SurfShop shop) {
         for (Long id : ids) {

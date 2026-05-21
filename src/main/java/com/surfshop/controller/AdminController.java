@@ -69,11 +69,7 @@ public class AdminController {
         long approvedCount = allMembers.stream()
                 .filter(m -> m.getStatus() == Member.MemberStatus.APPROVED).count();
 
-        LocalDate today = LocalDate.now();
-        LocalDate weekStart = today.with(java.time.DayOfWeek.MONDAY);
-        List<Lesson> weekLessons = lessonRepository.findByShopAndStartTimeBetweenOrderByStartTimeAsc(
-                shop, weekStart.atStartOfDay(), today.atTime(java.time.LocalTime.MAX));
-        int weekParticipants = weekLessons.stream().mapToInt(Lesson::getCurrentReservations).sum();
+        int weekParticipants = lessonService.getWeekParticipants(shop);
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("shopName", shop.getName());
