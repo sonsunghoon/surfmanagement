@@ -38,6 +38,7 @@ function switchMainTab(tab) {
     show(`tab-${tab}`);
 
     if (tab === 'login') loadLoginShops();
+    if (tab === 'register') loadShops();
 }
 
 /* ══════════════════════
