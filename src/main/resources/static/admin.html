@@ -77,7 +77,10 @@
 <!-- ═══════════════════ DASHBOARD VIEW ═══════════════════ -->
 <div id="dashboard-view" class="admin-layout hidden">
     <header class="app-header">
-        <div class="logo"><span class="wave-icon">🌊</span> SurfBook</div>
+        <div style="display:flex;align-items:center;gap:10px">
+            <button class="btn-hamburger" onclick="toggleSidebar()">☰</button>
+            <div class="logo"><span class="wave-icon">🌊</span> SurfBook</div>
+        </div>
         <div class="header-right" style="display:flex;align-items:center;gap:12px">
             <span id="header-shop" style="font-weight:600"></span>
             <span id="header-email" style="opacity:0.75"></span>
@@ -87,8 +90,9 @@
         </div>
     </header>
 
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
     <div class="admin-shell">
-      <aside class="sidebar">
+      <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
           <span class="wave-icon">🌊</span>
           <div>

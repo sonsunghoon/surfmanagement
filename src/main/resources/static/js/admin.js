@@ -75,6 +75,16 @@ async function handleLogin(e) {
 function showLoginError(msg) { $('login-error').textContent = msg; show('login-error'); }
 
 /* ── Admin Login Tab Switch ── */
+/* ── Mobile Sidebar ── */
+function toggleSidebar() {
+    $('sidebar').classList.toggle('open');
+    $('sidebar-overlay').classList.toggle('open');
+}
+function closeSidebar() {
+    $('sidebar').classList.remove('open');
+    $('sidebar-overlay').classList.remove('open');
+}
+
 function switchAdminTab(tab) {
     $('tab-btn-login').classList.toggle('active', tab === 'login');
     $('tab-btn-register').classList.toggle('active', tab === 'register');
@@ -187,6 +197,7 @@ async function loadDashboardStats() {
 /* ── Tabs ── */
 function switchTab(tab) {
     currentTab = tab;
+    closeSidebar();
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
     hide('tab-members'); hide('tab-lessons'); hide('tab-expiry');
     show(`tab-${tab}`);
