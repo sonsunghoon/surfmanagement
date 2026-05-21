@@ -7,13 +7,22 @@ import com.surfshop.dto.ApiResponse;
 import com.surfshop.entity.Admin;
 import com.surfshop.entity.SurfShop;
 import com.surfshop.repository.AdminRepository;
+import com.surfshop.repository.MemberRepository;
 import com.surfshop.repository.SurfShopRepository;
+import com.surfshop.repository.NotificationRepository;
+import com.surfshop.repository.LessonRepository;
+import com.surfshop.repository.ReservationRepository;
+import com.surfshop.repository.WaitlistRepository;
+import com.surfshop.repository.MembershipRepository;
+import com.surfshop.repository.KeepingMembershipRepository;
+import com.surfshop.repository.MemberNotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -27,6 +36,14 @@ public class AdminService {
     private final AdminRepository adminRepository;
     private final SurfShopRepository surfShopRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final MemberRepository memberRepository;
+    private final NotificationRepository notificationRepository;
+    private final LessonRepository lessonRepository;
+    private final ReservationRepository reservationRepository;
+    private final WaitlistRepository waitlistRepository;
+    private final MembershipRepository membershipRepository;
+    private final KeepingMembershipRepository keepingMembershipRepository;
+    private final MemberNotificationRepository memberNotificationRepository;
 
     @Transactional
     public ApiResponse<AdminLoginResponse> register(AdminRegisterRequest request) {
@@ -82,5 +99,28 @@ public class AdminService {
         return adminRepository.findByAuthToken(token)
                 .filter(admin -> admin.getTokenExpiresAt() != null
                         && admin.getTokenExpiresAt().isAfter(LocalDateTime.now()));
+    }
+
+    @Transactional
+    public void deleteAdminAccount(Admin admin) {
+        SurfShop shop = admin.getShop();
+        List<com.surfshop.entity.Member> members = memberRepository.findByShop(shop);
+        for (com.surfshop.entity.Member member : members) {
+            memberNotificationRepository.deleteAllByMember(member);
+            reservationRepository.deleteAllByMember(member);
+            waitlistRepository.deleteAllByMember(member);
+            membershipRepository.deleteAllByMember(member);
+            keepingMembershipRepository.deleteAllByMember(member);
+        }
+        memberRepository.deleteAll(members);
+        List<com.surfshop.entity.Lesson> lessons = lessonRepository.findByShopOrderByStartTimeAsc(shop);
+        for (com.surfshop.entity.Lesson lesson : lessons) {
+            reservationRepository.deleteAllByLesson(lesson);
+            waitlistRepository.deleteAllByLesson(lesson);
+        }
+        lessonRepository.deleteAll(lessons);
+        notificationRepository.deleteAllByShop(shop);
+        adminRepository.delete(admin);
+        surfShopRepository.delete(shop);
     }
 }

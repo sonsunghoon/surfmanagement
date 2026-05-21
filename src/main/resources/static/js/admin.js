@@ -213,6 +213,7 @@ function renderMemberItem(m) {
             <button class="btn btn-success btn-sm" onclick="approveMember(${m.id})">승인</button>
             <button class="btn btn-danger btn-sm" onclick="rejectMember(${m.id})">반려</button>`;
     }
+    const deleteMemberBtn = `<button class="btn btn-sm" style="color:#ef4444;border:1px solid #ef4444;background:transparent" onclick="deleteMemberAccount(${m.id}, '${escapeHtml(m.name)}')">삭제</button>`;
 
     const membershipHtml = renderMembershipBadge(m.membership);
     const keepingHtml = m.keeping ? renderKeepingBadge(m.keeping) : '';
@@ -251,6 +252,7 @@ function renderMemberItem(m) {
             <div class="member-actions">
                 ${approveRejectBtns}
                 ${membershipBtn}
+                ${deleteMemberBtn}
             </div>
         </li>`;
 }
@@ -287,6 +289,24 @@ async function rejectMember(id) {
     const data = await api(C.API.ADMIN_REJECT(id), { method: 'PUT' });
     if (data?.success) { loadMembers(); loadDashboardStats(); }
     else alert(data?.message || '오류가 발생했습니다.');
+}
+
+async function deleteMemberAccount(id, name) {
+    if (!confirm(`${name} 회원을 완전히 삭제하시겠습니까?\n모든 예약 및 데이터가 삭제됩니다.`)) return;
+    const data = await api(C.API.ADMIN_MEMBER_DELETE(id), { method: 'DELETE' });
+    if (data?.success) { loadMembers(); loadDashboardStats(); }
+    else alert(data?.message || '오류가 발생했습니다.');
+}
+
+async function deleteAdminAccount() {
+    if (!confirm('관리자 계정과 서핑샵 전체 데이터를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) return;
+    const data = await api(C.API.ADMIN_DELETE_ME, { method: 'DELETE' });
+    if (data?.success) {
+        store.clearAll();
+        window.location.href = '/admin.html';
+    } else {
+        alert(data?.message || '오류가 발생했습니다.');
+    }
 }
 
 function setFilter(filter) {

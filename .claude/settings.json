@@ -8,7 +8,25 @@
       "Bash(gradlew.bat compileJava)",
       "Bash(.\\\\gradlew.bat compileJava)",
       "Read(//c/Program Files/PostgreSQL/**)",
-      "PowerShell(Get-Command psql -ErrorAction SilentlyContinue)"
+      "PowerShell(Get-Command psql -ErrorAction SilentlyContinue)",
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(curl -s http://localhost:8084/api/shops)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8084/guest.html)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8084/member.html)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8084/admin.html)",
+      "Bash(curl -s -X POST http://localhost:8084/api/members/register -H 'Content-Type: application/json' -d '{\"shopId\":1,\"name\":\"테스트\",\"email\":\"test@test.com\",\"phone\":\"010-0000-0001\",\"password\":\"test1234\",\"boardType\":\"SHORTBOARD\",\"surfLevel\":\"BEGINNER\"}')",
+      "Bash(curl -s -X POST http://localhost:8084/api/members/login -H 'Content-Type: application/json' -d '{\"shopId\":1,\"email\":\"test@test.com\",\"password\":\"test1234\"}')",
+      "Bash(curl -sv -X POST http://localhost:8084/api/members/register -H 'Content-Type: application/json' -d '{\"shopId\":1,\"name\":\"테스트\",\"email\":\"test@test.com\",\"phone\":\"01000000001\",\"password\":\"test1234\",\"boardType\":\"SHORTBOARD\",\"surfLevel\":\"BEGINNER\"}')",
+      "Bash(curl -s -X POST http://localhost:8084/api/members/register -H 'Content-Type: application/json' -d '{\"shopId\":1,\"name\":\"테스트회원\",\"email\":\"test@test.com\",\"phone\":\"010-0000-0001\",\"password\":\"test1234\",\"boardType\":\"SHORTBOARD\",\"surfLevel\":\"BEGINNER\"}')",
+      "Bash(curl -s -X POST http://localhost:8084/api/members/register -H 'Content-Type: application/json;charset=UTF-8' --data-binary '{\"shopId\":1,\"name\":\"Test User\",\"email\":\"test@test.com\",\"phone\":\"010-1234-5678\",\"password\":\"test1234\",\"boardType\":\"SHORTBOARD\",\"surfLevel\":\"BEGINNER\"}')",
+      "Bash(curl -s -X POST http://localhost:8084/api/members/login -H 'Content-Type: application/json;charset=UTF-8' --data-binary '{\"shopId\":1,\"email\":\"test@test.com\",\"password\":\"test1234\"}')",
+      "Bash(curl -s -X POST http://localhost:8084/api/members/login -H 'Content-Type: application/json' --data-binary '{\"shopId\":1,\"email\":\"test@test.com\",\"password\":\"test1234\"}')",
+      "Bash(curl -s -X POST http://localhost:8084/api/members/register -H 'Content-Type: application/json' --data-binary '{\"shopId\":1,\"name\":\"Test2\",\"email\":\"test2@test.com\",\"phone\":\"010-9999-8888\",\"password\":\"test1234\",\"boardType\":\"LONGBOARD\",\"surfLevel\":\"INTERMEDIATE\"}')",
+      "Bash(curl -s -X POST http://localhost:8084/api/members/login -H 'Content-Type: application/json' --data-binary '{\"shopId\":1,\"email\":\"test2@test.com\",\"password\":\"test1234\"}')",
+      "Bash(curl -s -X POST http://localhost:8084/api/admin/login -H 'Content-Type: application/json' --data-binary '{\"email\":\"admin@surfbook.kr\",\"password\":\"__TRACKED_VAR__\"}')",
+      "Bash(psql -U postgres -d surfshopdb -c \"SELECT email, shop_id FROM admin;\")",
+      "Bash(PGPASSWORD=0119 psql -U postgres -d surfshopdb -c \"SELECT id, email, shop_id FROM admin LIMIT 5;\")",
+      "PowerShell($env:PGPASSWORD=\"0119\"; & \"C:\\\\Program Files\\\\PostgreSQL\\\\17\\\\bin\\\\psql.exe\" -U postgres -d surfshopdb -c \"SELECT id, email, shop_id FROM admin LIMIT 5;\" 2>&1)"
     ]
   }
 }

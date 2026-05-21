@@ -39,6 +39,9 @@ const SURF_SHOP_CONSTANTS = {
         MEMBER_NOTIFICATIONS_READ_ALL:'/api/members/notifications/read-all',
         MEMBER_NOTIFICATION_READ: (id) => `/api/members/notifications/${id}/read`,
         ADMIN_MEMBER_NOTIFY: (id) => `/api/admin/members/${id}/notify`,
+        ADMIN_MEMBER_DELETE: (id) => `/api/admin/members/${id}`,
+        ADMIN_DELETE_ME:     '/api/admin/me',
+        MEMBER_DELETE_ME:    '/api/members/me',
     },
 
     STORAGE: {

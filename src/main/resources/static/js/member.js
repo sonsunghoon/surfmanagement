@@ -680,6 +680,14 @@ function clearMemberStorage() {
      C.STORAGE.MEMBER_SHOP_ID, C.STORAGE.MEMBER_SHOP_NAME].forEach(k => localStorage.removeItem(k));
 }
 
+async function deleteMyAccount() {
+    if (!confirm('정말 탈퇴하시겠습니까?\n모든 예약 및 데이터가 삭제됩니다.')) return;
+    try { await authApi(C.API.MEMBER_DELETE_ME, { method: 'DELETE' }); }
+    catch { /* ignore */ }
+    clearMemberStorage();
+    window.location.href = '/guest.html';
+}
+
 async function logout() {
     if (memberToken) {
         try { await fetch(C.API.MEMBER_LOGOUT, { method: 'POST', headers: { 'Authorization': `Bearer ${memberToken}` } }); }

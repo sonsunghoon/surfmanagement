@@ -395,6 +395,24 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success("수업 상세 조회", result));
     }
 
+    @DeleteMapping("/members/{id}")
+    public ResponseEntity<ApiResponse<?>> deleteMember(@PathVariable Long id, HttpServletRequest request) {
+        Admin admin = (Admin) request.getAttribute("currentAdmin");
+        Member member = memberRepository.findById(id).orElse(null);
+        if (member == null || !member.getShop().getId().equals(admin.getShop().getId())) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("존재하지 않는 회원입니다."));
+        }
+        memberService.deleteMember(member);
+        return ResponseEntity.ok(ApiResponse.success("회원이 삭제되었습니다."));
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<ApiResponse<?>> deleteAdminAccount(HttpServletRequest request) {
+        Admin admin = (Admin) request.getAttribute("currentAdmin");
+        adminService.deleteAdminAccount(admin);
+        return ResponseEntity.ok(ApiResponse.success("계정이 삭제되었습니다."));
+    }
+
     @DeleteMapping("/lessons")
     public ResponseEntity<ApiResponse<?>> deleteLessons(
             @RequestBody Map<String, List<Long>> body, HttpServletRequest request) {

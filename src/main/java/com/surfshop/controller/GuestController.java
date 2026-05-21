@@ -66,6 +66,13 @@ public class GuestController {
         return ResponseEntity.ok(ApiResponse.success("회원 정보 조회 성공", buildMemberInfo(member)));
     }
 
+    @DeleteMapping("/me")
+    public ResponseEntity<ApiResponse<?>> deleteMyAccount(HttpServletRequest request) {
+        Member member = (Member) request.getAttribute("currentMember");
+        memberService.deleteMember(member);
+        return ResponseEntity.ok(ApiResponse.success("회원 탈퇴가 완료되었습니다."));
+    }
+
     /* ── 달력: 월별 수업 목록 ── */
     @Transactional(readOnly = true)
     @GetMapping("/lessons/calendar")

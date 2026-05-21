@@ -10,6 +10,10 @@ import com.surfshop.entity.SurfShop;
 import com.surfshop.repository.MemberRepository;
 import com.surfshop.repository.MembershipRepository;
 import com.surfshop.repository.SurfShopRepository;
+import com.surfshop.repository.ReservationRepository;
+import com.surfshop.repository.WaitlistRepository;
+import com.surfshop.repository.KeepingMembershipRepository;
+import com.surfshop.repository.MemberNotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -39,6 +43,10 @@ public class MemberService {
     private final SurfShopRepository surfShopRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final NotificationService notificationService;
+    private final ReservationRepository reservationRepository;
+    private final WaitlistRepository waitlistRepository;
+    private final KeepingMembershipRepository keepingMembershipRepository;
+    private final MemberNotificationRepository memberNotificationRepository;
 
     @Transactional
     public ApiResponse<?> register(MemberRegistrationRequest request) {
@@ -146,5 +154,15 @@ public class MemberService {
     @Transactional(readOnly = true)
     public Optional<Membership> getMembership(Member member) {
         return membershipRepository.findTopByMemberAndActiveTrueOrderByCreatedAtDesc(member);
+    }
+
+    @Transactional
+    public void deleteMember(Member member) {
+        memberNotificationRepository.deleteAllByMember(member);
+        reservationRepository.deleteAllByMember(member);
+        waitlistRepository.deleteAllByMember(member);
+        membershipRepository.deleteAllByMember(member);
+        keepingMembershipRepository.deleteAllByMember(member);
+        memberRepository.delete(member);
     }
 }

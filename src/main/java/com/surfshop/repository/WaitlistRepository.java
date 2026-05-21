@@ -14,4 +14,5 @@ public interface WaitlistRepository extends JpaRepository<WaitlistEntry, Long> {
     List<WaitlistEntry> findByLessonAndStatusOrderByCreatedAtAsc(Lesson lesson, WaitlistEntry.WaitlistStatus status);
     List<WaitlistEntry> findByMemberAndStatusOrderByCreatedAtDesc(Member member, WaitlistEntry.WaitlistStatus status);
     void deleteAllByLesson(Lesson lesson);
+    void deleteAllByMember(Member member);
 }

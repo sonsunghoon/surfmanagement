@@ -10,4 +10,5 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     List<Notification> findByShopOrderByCreatedAtDesc(SurfShop shop);
     List<Notification> findByShopAndReadFalseOrderByCreatedAtDesc(SurfShop shop);
     long countByShopAndReadFalse(SurfShop shop);
+    void deleteAllByShop(SurfShop shop);
 }

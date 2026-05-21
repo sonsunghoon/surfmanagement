@@ -17,4 +17,5 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     List<Reservation> findByMemberAndStatusOrderByCreatedAtDesc(Member member, Reservation.ReservationStatus status);
     List<Reservation> findByMemberAndStatusOrderByLessonStartTimeDesc(Member member, Reservation.ReservationStatus status);
     void deleteAllByLesson(Lesson lesson);
+    void deleteAllByMember(Member member);
 }

@@ -10,4 +10,5 @@ public interface MemberNotificationRepository extends JpaRepository<MemberNotifi
     List<MemberNotification> findByMemberOrderByCreatedAtDesc(Member member);
     List<MemberNotification> findByMemberAndReadFalseOrderByCreatedAtDesc(Member member);
     long countByMemberAndReadFalse(Member member);
+    void deleteAllByMember(Member member);
 }
