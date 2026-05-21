@@ -37,6 +37,11 @@ async function loadMyInfo() {
 function renderPage(d) {
     $('header-name').textContent = d.name;
     $('header-shop').textContent = d.shopName;
+    // Hero card
+    const heroShop = $('hero-shop');
+    const heroName = $('hero-name');
+    if (heroShop) heroShop.textContent = d.shopName || '';
+    if (heroName) heroName.textContent = `안녕하세요, ${d.name}님 👋`;
     renderMembershipCard(d.membership);
     renderKeepingCard(d.keeping);
     renderMemberInfo(d);

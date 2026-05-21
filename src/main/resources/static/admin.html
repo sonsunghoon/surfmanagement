@@ -41,39 +41,101 @@
         <div class="header-right">
             <span id="header-shop" style="font-weight:600"></span>
             <span id="header-email" style="opacity:0.75"></span>
-            <!-- 알림 벨 -->
-            <div class="notif-wrap" style="position:relative;display:inline-block">
-                <button class="btn btn-ghost btn-sm" id="btn-notifications" style="color:white;opacity:0.9;font-size:18px" title="알림" onclick="toggleNotifPanel()">🔔</button>
-                <span id="notif-badge" class="notif-badge hidden">0</span>
-            </div>
-            <button class="btn btn-ghost btn-sm" id="btn-refresh" style="color:white;opacity:0.9" title="새로고침">↺</button>
-            <button class="btn btn-ghost btn-sm" id="btn-logout" style="color:white;opacity:0.9">로그아웃</button>
         </div>
     </header>
 
-    <!-- 알림 패널 -->
-    <div id="notif-panel" class="notif-panel hidden">
-        <div class="notif-panel-header">
-            <span style="font-weight:700;font-size:15px">알림</span>
-            <button class="btn btn-outline btn-sm" onclick="markAllNotifRead()" style="font-size:12px">전체 읽음</button>
-        </div>
-        <div id="notif-list" style="max-height:360px;overflow-y:auto">
-            <div class="text-center" style="padding:20px"><span class="spinner dark"></span></div>
-        </div>
-    </div>
-
-    <div class="admin-content">
-        <div class="stats-grid mt-4">
-            <div class="stat-card"><div class="stat-value" id="stat-pending">-</div><div class="stat-label">신청 대기</div></div>
-            <div class="stat-card"><div class="stat-value" id="stat-approved">-</div><div class="stat-label">승인 회원</div></div>
-            <div class="stat-card"><div class="stat-value" id="stat-lessons">-</div><div class="stat-label">오늘 수업</div></div>
+    <div class="admin-shell">
+      <aside class="sidebar">
+        <div class="sidebar-brand">
+          <span class="wave-icon">🌊</span>
+          <div>
+            <div class="sidebar-title">SurfBook <small style="font-weight:400;opacity:0.45;font-size:11px">· admin</small></div>
+          </div>
         </div>
 
-        <div class="tabs">
+        <div class="sidebar-section-label">운영</div>
+        <nav class="sidebar-nav">
+          <button class="sidebar-link active" data-tab="members" onclick="switchTab('members')">
+            <span class="sidebar-ic">📊</span>대시보드
+          </button>
+          <button class="sidebar-link" data-tab="members" onclick="switchTab('members')">
+            <span class="sidebar-ic">👥</span>회원 관리
+            <span class="sidebar-badge" id="sidebar-badge-pending"></span>
+          </button>
+          <button class="sidebar-link" data-tab="lessons" onclick="switchTab('lessons')">
+            <span class="sidebar-ic">🌊</span>수업 관리
+          </button>
+        </nav>
+
+        <div class="sidebar-section-label">관리</div>
+        <nav class="sidebar-nav">
+          <button class="sidebar-link" data-tab="expiry" onclick="switchTab('expiry')">
+            <span class="sidebar-ic">🎫</span>회원권 만료
+          </button>
+          <button class="sidebar-link" onclick="toggleNotifPanel()">
+            <span class="sidebar-ic">🔔</span>알림 로그
+          </button>
+        </nav>
+
+        <div class="sidebar-user">
+          <div class="sidebar-user-ava" id="sidebar-ava">SB</div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebar-shop-name">양양 서핑클럽</div>
+            <div class="sidebar-user-email" id="sidebar-user-email"></div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-area">
+        <div class="topbar">
+          <div class="topbar-search">
+            <input type="search" class="search-input" placeholder="회원·수업·예약 검색..." />
+          </div>
+          <div class="topbar-actions">
+            <button class="btn btn-ghost btn-sm" id="btn-notifications" title="알림" onclick="toggleNotifPanel()">🔔</button>
+            <button class="btn btn-ghost btn-sm" id="btn-refresh" title="새로고침">↺</button>
+            <button class="btn btn-ghost btn-sm" id="btn-logout">로그아웃</button>
+            <button class="btn btn-primary btn-sm" id="btn-create-lesson">수업 만들기</button>
+          </div>
+        </div>
+
+        <div class="admin-content">
+          <div class="dashboard-welcome">
+            <div>
+              <h2 class="dashboard-title">안녕하세요, <span id="dashboard-shop-name"></span> 서핑클럽 👋</h2>
+              <p class="dashboard-subtitle">2026년 5월 17일 일요일 · 오늘 양양은 1.2m 사이드 오프쇼어 컨디션입니다.</p>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="switchTab('lessons')">오늘 수업 관리</button>
+          </div>
+
+          <div class="stats-grid stats-grid-4 mt-4">
+            <div class="stat-card accent">
+              <div class="stat-value" id="stat-pending">-</div>
+              <div class="stat-label">🔥 즉시 조치 필요</div>
+              <div class="stat-delta" id="stat-pending-delta">신청 대기 · D-7 만료</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="stat-approved">-</div>
+              <div class="stat-label">활성 회원</div>
+              <div class="stat-delta up" id="stat-approved-delta">승인 완료</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="stat-lessons">-</div>
+              <div class="stat-label">오늘 수업</div>
+              <div class="stat-delta" id="stat-lessons-delta">예정 수업</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="stat-auto-rate">92%</div>
+              <div class="stat-label">대기열 자동 처리</div>
+              <div class="stat-delta up">▲ 대기 자동 승격률</div>
+            </div>
+          </div>
+
+          <div class="tabs">
             <button class="tab-btn active" data-tab="members">회원 관리</button>
             <button class="tab-btn" data-tab="lessons">수업 관리</button>
             <button class="tab-btn" data-tab="expiry">회원권 만료</button>
-        </div>
+          </div>
 
         <!-- ── 회원 관리 탭 ── -->
         <div id="tab-members">
@@ -97,15 +159,13 @@
 
         <!-- ── 수업 관리 탭 ── -->
         <div id="tab-lessons" class="hidden">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px; gap:10px; flex-wrap:wrap;">
                 <p class="section-subtitle" style="margin:0">등록된 수업 목록입니다.</p>
-                <div style="display:flex;gap:8px">
-                    <button class="btn btn-danger btn-sm" id="btn-delete-lessons" disabled>수업 삭제</button>
-                    <button class="btn btn-primary btn-sm" id="btn-create-lesson">+ 수업 생성</button>
-                </div>
+                <button class="btn btn-danger btn-sm" id="btn-delete-lessons" disabled>수업 삭제</button>
             </div>
             <div id="lesson-list"><div class="text-center mt-16"><span class="spinner dark"></span></div></div>
         </div>
+      </main>
     </div>
 </div>
 

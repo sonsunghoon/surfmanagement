@@ -37,6 +37,13 @@ public class AdminController {
     private final MembershipRepository membershipRepository;
     private final MemberRepository memberRepository;
 
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponse<AdminLoginResponse>> register(@Valid @RequestBody AdminRegisterRequest request) {
+        ApiResponse<AdminLoginResponse> response = adminService.register(request);
+        if (response.isSuccess()) return ResponseEntity.ok(response);
+        return ResponseEntity.badRequest().body(response);
+    }
+
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AdminLoginResponse>> login(@Valid @RequestBody AdminLoginRequest request) {
         ApiResponse<AdminLoginResponse> response = adminService.login(request);
@@ -80,9 +87,20 @@ public class AdminController {
         Admin admin = (Admin) request.getAttribute("currentAdmin");
         SurfShop shop = admin.getShop();
 
-        List<Member> members = "PENDING".equals(status)
-                ? memberService.getPendingMembers(shop)
-                : memberService.getAllMembers(shop);
+        List<Member> members;
+        switch (status) {
+            case "PENDING":
+                members = memberService.getPendingMembers(shop);
+                break;
+            case "APPROVED":
+                members = memberService.getMembersByStatus(shop, Member.MemberStatus.APPROVED);
+                break;
+            case "REJECTED":
+                members = memberService.getMembersByStatus(shop, Member.MemberStatus.REJECTED);
+                break;
+            default:
+                members = memberService.getAllMembers(shop);
+        }
 
         List<Map<String, Object>> result = members.stream().map(m -> {
             Map<String, Object> map = new LinkedHashMap<>();

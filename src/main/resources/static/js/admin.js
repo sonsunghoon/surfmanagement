@@ -78,8 +78,17 @@ function showLoginError(msg) { $('login-error').textContent = msg; show('login-e
 function showDashboard() {
     hide('login-view');
     show('dashboard-view');
-    $('header-shop').textContent = store.get('SHOP_NAME') || '';
-    $('header-email').textContent = store.get('EMAIL') || '';
+    const shopName = store.get('SHOP_NAME') || '';
+    const email    = store.get('EMAIL') || '';
+    $('header-shop').textContent = shopName;
+    $('header-email').textContent = email;
+    // Sidebar user section
+    const sidebarShop  = $('sidebar-shop-name');
+    const sidebarEmail = $('sidebar-user-email');
+    const sidebarAva   = $('sidebar-ava');
+    if (sidebarShop)  sidebarShop.textContent  = shopName;
+    if (sidebarEmail) sidebarEmail.textContent = email;
+    if (sidebarAva && shopName) sidebarAva.textContent = shopName.substring(0, 2);
     loadDashboardStats();
     switchTab('members');
     startNotifPoll();
@@ -90,9 +99,16 @@ async function loadDashboardStats() {
         const data = await api(C.API.ADMIN_DASHBOARD);
         if (!data || !data.success) return;
         const d = data.data;
-        $('stat-pending').textContent  = d.pendingCount   ?? '-';
+        const pending = d.pendingCount ?? 0;
+        $('stat-pending').textContent  = pending;
         $('stat-approved').textContent = d.approvedCount  ?? '-';
         $('stat-lessons').textContent  = d.todayLessonCount ?? '-';
+        // Sidebar badge for pending count
+        const badge = $('sidebar-badge-pending');
+        if (badge) {
+            badge.textContent = pending;
+            badge.classList.toggle('visible', pending > 0);
+        }
         updateNotifBadge(d.unreadNotifications ?? 0);
     } catch { /* silent */ }
 }

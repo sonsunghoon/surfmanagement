@@ -134,6 +134,11 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
+    public List<Member> getMembersByStatus(SurfShop shop, Member.MemberStatus status) {
+        return memberRepository.findByShopAndStatusOrderByCreatedAtDesc(shop, status);
+    }
+
+    @Transactional(readOnly = true)
     public List<Member> getAllMembers(SurfShop shop) {
         return memberRepository.findByShopOrderByCreatedAtDesc(shop);
     }

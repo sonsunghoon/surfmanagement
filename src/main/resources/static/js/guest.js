@@ -35,6 +35,7 @@ function switchMainTab(tab) {
     });
     hide('tab-register');
     hide('tab-login');
+    hide('tab-admin-register');
     show(`tab-${tab}`);
 
     if (tab === 'login') loadLoginShops();
@@ -202,6 +203,52 @@ function showPendingScreen(name) {
     show('pending-section');
 }
 
+/* ══════════════════════
+   관리자(샵) 등록 플로우
+══════════════════════ */
+
+async function submitAdminRegister(e) {
+    e.preventDefault();
+    hideAlert('admin-reg-alert');
+
+    const shopName     = $('ar-shop-name').value.trim();
+    const shopLocation = $('ar-shop-location').value.trim();
+    const shopDesc     = $('ar-shop-desc').value.trim();
+    const email        = $('ar-email').value.trim();
+    const password     = $('ar-password').value;
+    const password2    = $('ar-password2').value;
+
+    if (!shopName || !shopLocation || !email || !password || !password2) {
+        showAlert('admin-reg-alert', '필수 항목을 모두 입력해주세요.'); return;
+    }
+    if (password !== password2) {
+        showAlert('admin-reg-alert', '비밀번호가 일치하지 않습니다.'); return;
+    }
+    if (password.length < 8) {
+        showAlert('admin-reg-alert', '비밀번호는 8자 이상이어야 합니다.'); return;
+    }
+
+    const btn = $('btn-admin-reg');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> 개설 중...';
+    try {
+        const data = await api(C.API.ADMIN_REGISTER, {
+            method: 'POST',
+            body: JSON.stringify({ email, password, shopName, shopLocation, shopDescription: shopDesc }),
+        });
+        if (data.success) {
+            const d = data.data;
+            localStorage.setItem('sb_admin_token', d.token);
+            localStorage.setItem('sb_shop_name', d.shopName);
+            localStorage.setItem('sb_shop_id', String(d.shopId));
+            localStorage.setItem('sb_admin_email', d.adminEmail);
+            window.location.href = '/admin.html';
+        } else {
+            showAlert('admin-reg-alert', data.message || '등록 중 오류가 발생했습니다.');
+        }
+    } catch { showAlert('admin-reg-alert', C.MESSAGES.NETWORK_ERROR); }
+    finally { btn.disabled = false; btn.innerHTML = '서핑샵 개설하기'; }
+}
+
 /* ── Escape Helpers ── */
 function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, c =>
@@ -229,6 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     $('reg-form').addEventListener('submit', submitRegistration);
     $('login-form').addEventListener('submit', submitLogin);
+    $('admin-reg-form').addEventListener('submit', submitAdminRegister);
     $('btn-pending-back').addEventListener('click', () => {
         hide('pending-section');
         show('login-section');

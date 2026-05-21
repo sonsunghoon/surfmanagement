@@ -7,6 +7,7 @@ const SURF_SHOP_CONSTANTS = {
         MEMBER_LOGIN:    '/api/members/login',
         MEMBER_LOGOUT:   '/api/members/logout',
         MEMBER_ME:       '/api/members/me',
+        ADMIN_REGISTER:  '/api/admin/register',
         ADMIN_LOGIN:     '/api/admin/login',
         ADMIN_LOGOUT:    '/api/admin/logout',
         ADMIN_DASHBOARD: '/api/admin/dashboard',

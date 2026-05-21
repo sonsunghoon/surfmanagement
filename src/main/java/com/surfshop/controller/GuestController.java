@@ -197,11 +197,21 @@ public class GuestController {
         return ResponseEntity.ok(ApiResponse.success("대기 목록", result));
     }
 
-    /* ── 내 예약 목록 (stub) ── */
+    /* ── 내 예약 목록 ── */
+    @Transactional(readOnly = true)
     @GetMapping("/reservations")
-    public ResponseEntity<ApiResponse<?>> getMyReservations(HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getMyReservations(HttpServletRequest request) {
         Member member = (Member) request.getAttribute("currentMember");
-        return ResponseEntity.ok(ApiResponse.success("예약 목록", List.of()));
+        List<Reservation> reservations = reservationService.getMyReservations(member);
+        List<Map<String, Object>> result = reservations.stream().map(r -> {
+            Lesson l = r.getLesson();
+            Map<String, Object> map = buildLessonMap(l, r, null);
+            map.put("reservationId", r.getId());
+            map.put("reservedAt", r.getCreatedAt().toString());
+            map.put("isPast", l.getStartTime().isBefore(java.time.LocalDateTime.now()));
+            return map;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(ApiResponse.success("예약 목록", result));
     }
 
     /* ── 회원 알림 ── */

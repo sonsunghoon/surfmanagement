@@ -16,9 +16,18 @@ Thumbs.db
 *.log
 logs/
 
+# Maven
+target/
+
 # Spring Boot
 application-local.yml
 application-secret.yml
+
+# Design files (large, not needed for deployment)
+design-bundle/
+
+# Claude local settings
+.claude/settings.local.json
 
 # Sensitive local files (never commit)
 "git 토큰 삭제 금지.JPG"

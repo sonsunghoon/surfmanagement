@@ -18,10 +18,11 @@
 
 <main class="page-container">
 
-    <!-- ── 메인 탭 (회원가입 / 로그인) ── -->
+    <!-- ── 메인 탭 (회원가입 / 로그인 / 관리자 등록) ── -->
     <div id="main-tabs" class="tabs mt-16">
         <button class="tab-btn active" data-tab="register">회원 가입</button>
         <button class="tab-btn" data-tab="login">로그인</button>
+        <button class="tab-btn" data-tab="admin-register">샵 등록</button>
     </div>
 
     <!-- ══════════════════════════════
@@ -175,6 +176,55 @@
             </div>
         </div>
 
+    </div>
+
+    <!-- ══════════════════════════════
+         관리자(샵) 등록 플로우
+    ══════════════════════════════ -->
+    <div id="tab-admin-register" class="hidden">
+        <div class="card mt-16">
+            <div class="card-header">🏄 서핑샵 & 관리자 계정 만들기</div>
+            <div class="card-body">
+                <div id="admin-reg-alert" class="alert alert-danger hidden"></div>
+                <form id="admin-reg-form" novalidate>
+                    <p class="section-subtitle mb-8" style="color:var(--fg-neutral-tertiary);font-size:13px">
+                        서핑샵 정보와 관리자 계정을 함께 생성합니다.
+                    </p>
+
+                    <div class="form-group">
+                        <label class="form-label" for="ar-shop-name">서핑샵 이름 <span class="required">*</span></label>
+                        <input type="text" id="ar-shop-name" class="form-control" placeholder="예) 양양 서핑클럽" maxlength="50" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="ar-shop-location">서핑샵 위치 <span class="required">*</span></label>
+                        <input type="text" id="ar-shop-location" class="form-control" placeholder="예) 강원도 양양군 현남면 인구해변길 20" maxlength="100" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="ar-shop-desc">샵 소개 <span style="color:var(--gray-400);font-weight:400">(선택)</span></label>
+                        <input type="text" id="ar-shop-desc" class="form-control" placeholder="한 줄 소개를 입력해주세요" maxlength="200">
+                    </div>
+
+                    <div style="height:1px;background:var(--line-soft);margin:16px 0"></div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="ar-email">관리자 이메일 <span class="required">*</span></label>
+                        <input type="email" id="ar-email" class="form-control" placeholder="admin@myshop.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="ar-password">비밀번호 <span class="required">*</span></label>
+                        <input type="password" id="ar-password" class="form-control" placeholder="8자 이상 입력" minlength="8" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="ar-password2">비밀번호 확인 <span class="required">*</span></label>
+                        <input type="password" id="ar-password2" class="form-control" placeholder="비밀번호 재입력" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg btn-block mt-8" id="btn-admin-reg">
+                        서핑샵 개설하기
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 
 </main>
