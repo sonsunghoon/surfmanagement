@@ -72,6 +72,17 @@ public class MembershipService {
                     .startDate(req.getStartDate())
                     .endDate(req.getEndDate())
                     .build());
+        } else if (req.getType() == Membership.MembershipType.SEASON) {
+            if (req.getStartDate() == null) {
+                return ApiResponse.error("시작일을 입력해주세요.");
+            }
+            membershipRepository.save(Membership.builder()
+                    .member(member)
+                    .type(Membership.MembershipType.SEASON)
+                    .startDate(req.getStartDate())
+                    .endDate(req.getStartDate().plusYears(1))
+                    .periodMonths(12)
+                    .build());
         } else {
             if (req.getTotalSessions() == null || req.getTotalSessions() <= 0) {
                 return ApiResponse.error("횟수를 입력해주세요.");

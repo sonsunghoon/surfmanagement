@@ -50,7 +50,8 @@ public class Membership {
 
     public enum MembershipType {
         PERIOD("기간권"),
-        SESSION("횟수권");
+        SESSION("횟수권"),
+        SEASON("시즌방");
 
         private final String label;
         MembershipType(String label) { this.label = label; }

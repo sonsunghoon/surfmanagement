@@ -312,6 +312,30 @@ async function rejectMember(id) {
     else alert(data?.message || '오류가 발생했습니다.');
 }
 
+/* ── 관리자 회원 추가 ── */
+function openAddMemberModal() {
+    $('add-member-modal').classList.remove('hidden');
+    $('add-member-form').reset();
+    $('add-member-error').classList.add('hidden');
+}
+function closeAddMemberModal() {
+    $('add-member-modal').classList.add('hidden');
+}
+async function submitAddMember(e) {
+    e.preventDefault();
+    const name = $('add-member-name').value.trim();
+    const phone = $('add-member-phone').value.trim();
+    if (!name || !phone) { $('add-member-error').textContent = '이름과 전화번호를 입력해주세요.'; $('add-member-error').classList.remove('hidden'); return; }
+    const btn = $('btn-add-member-submit');
+    btn.disabled = true; btn.textContent = '추가 중...';
+    try {
+        const data = await api(C.API.ADMIN_MEMBER_ADD, { method: 'POST', body: JSON.stringify({ name, phone }) });
+        if (data?.success) { closeAddMemberModal(); loadMembers(); loadDashboardStats(); }
+        else { $('add-member-error').textContent = data?.message || '오류가 발생했습니다.'; $('add-member-error').classList.remove('hidden'); }
+    } catch { $('add-member-error').textContent = C.MESSAGES.NETWORK_ERROR; $('add-member-error').classList.remove('hidden'); }
+    finally { btn.disabled = false; btn.textContent = '추가'; }
+}
+
 async function deleteMemberAccount(id, name) {
     if (!confirm(`${name} 회원을 완전히 삭제하시겠습니까?\n모든 예약 및 데이터가 삭제됩니다.`)) return;
     const data = await api(C.API.ADMIN_MEMBER_DELETE(id), { method: 'DELETE' });
@@ -468,6 +492,7 @@ function renderMembershipForm(ms) {
                 <div class="radio-group">
                     <label class="radio-label"><input type="radio" name="ms-type" value="PERIOD" checked onchange="onNewTypeChange()"><span>기간권</span></label>
                     <label class="radio-label"><input type="radio" name="ms-type" value="SESSION" onchange="onNewTypeChange()"><span>횟수권</span></label>
+                    <label class="radio-label"><input type="radio" name="ms-type" value="SEASON" onchange="onNewTypeChange()"><span>시즌방 (1년)</span></label>
                 </div>
             </div>
             <div id="new-period-opts">
@@ -554,8 +579,9 @@ function updateAdjPreview() {
 
 function onNewTypeChange() {
     const type = document.querySelector('input[name="ms-type"]:checked')?.value;
-    if (type === 'PERIOD') { show('new-period-opts'); hide('new-session-opts'); }
-    else { hide('new-period-opts'); show('new-session-opts'); }
+    if (type === 'PERIOD') { show('new-period-opts'); hide('new-session-opts'); hide('new-season-opts'); }
+    else if (type === 'SEASON') { hide('new-period-opts'); hide('new-session-opts'); show('new-season-opts'); }
+    else { hide('new-period-opts'); show('new-session-opts'); hide('new-season-opts'); }
 }
 
 function switchToNewMembership(currentType) {
@@ -570,6 +596,7 @@ function switchToNewMembership(currentType) {
             <div class="radio-group">
                 <label class="radio-label"><input type="radio" name="ms-type" value="PERIOD" ${currentType==='PERIOD'?'checked':''} onchange="onNewTypeChange()"><span>기간권</span></label>
                 <label class="radio-label"><input type="radio" name="ms-type" value="SESSION" ${currentType==='SESSION'?'checked':''} onchange="onNewTypeChange()"><span>횟수권</span></label>
+                <label class="radio-label"><input type="radio" name="ms-type" value="SEASON" ${currentType==='SEASON'?'checked':''} onchange="onNewTypeChange()"><span>시즌방 (1년)</span></label>
             </div>
         </div>
         <div id="new-period-opts" ${currentType!=='PERIOD'?'class="hidden"':''}>
@@ -595,6 +622,13 @@ function switchToNewMembership(currentType) {
                     <input type="date" id="ms-start2" class="form-control" value="${today}">
                 </div>
             </div>
+        </div>
+        <div id="new-season-opts" ${currentType!=='SEASON'?'class="hidden"':''}>
+            <div class="form-group">
+                <label class="form-label">시작일 <span class="required">*</span></label>
+                <input type="date" id="ms-season-start" class="form-control" value="${today}">
+                <small style="color:var(--gray-500);font-size:12px">종료일은 시작일로부터 1년 후 자동 설정됩니다.</small>
+            </div>
         </div>`;
     $('btn-assign-ms').textContent = '새로 발급';
     $('btn-assign-ms').onclick = submitNewMembership;
@@ -608,6 +642,10 @@ async function submitNewMembership() {
         const endDate = $('ms-end')?.value;
         if (!startDate || !endDate) { showModalAlert('시작일과 종료일을 입력해주세요.'); return; }
         body = { type, startDate, endDate };
+    } else if (type === 'SEASON') {
+        const startDate = $('ms-season-start')?.value;
+        if (!startDate) { showModalAlert('시작일을 입력해주세요.'); return; }
+        body = { type, startDate };
     } else {
         const sessions = parseInt($('ms-sessions')?.value);
         const startDate = $('ms-start2')?.value;

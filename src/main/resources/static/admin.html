@@ -192,14 +192,39 @@
 
         <!-- ── 회원 관리 탭 ── -->
         <div id="tab-members">
-            <div class="filter-bar">
-                <button class="filter-chip active" data-filter="ALL">전체</button>
-                <button class="filter-chip" data-filter="PENDING">대기중</button>
-                <button class="filter-chip" data-filter="APPROVED">승인</button>
-                <button class="filter-chip" data-filter="REJECTED">반려</button>
+            <div class="filter-bar" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                    <button class="filter-chip active" data-filter="ALL">전체</button>
+                    <button class="filter-chip" data-filter="PENDING">대기중</button>
+                    <button class="filter-chip" data-filter="APPROVED">승인</button>
+                    <button class="filter-chip" data-filter="REJECTED">반려</button>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="openAddMemberModal()">+ 회원 추가</button>
             </div>
             <div class="card">
                 <div id="member-list"><div class="text-center mt-16"><span class="spinner dark"></span></div></div>
+            </div>
+
+            <!-- 회원 추가 모달 -->
+            <div id="add-member-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:500;display:flex;align-items:center;justify-content:center;padding:16px">
+                <div style="background:#fff;border-radius:16px;padding:24px;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
+                    <h3 style="margin:0 0 16px;font-size:17px;font-weight:700">회원 직접 추가</h3>
+                    <div id="add-member-error" class="alert alert-danger hidden"></div>
+                    <form id="add-member-form" onsubmit="submitAddMember(event)" novalidate>
+                        <div class="form-group">
+                            <label class="form-label">이름 <span class="required">*</span></label>
+                            <input type="text" id="add-member-name" class="form-control" placeholder="홍길동" maxlength="20" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">전화번호 <span class="required">*</span></label>
+                            <input type="tel" id="add-member-phone" class="form-control" placeholder="010-0000-0000" maxlength="13" required>
+                        </div>
+                        <div style="display:flex;gap:8px;margin-top:16px">
+                            <button type="button" class="btn btn-outline btn-block" onclick="closeAddMemberModal()">취소</button>
+                            <button type="submit" class="btn btn-primary btn-block" id="btn-add-member-submit">추가</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
 

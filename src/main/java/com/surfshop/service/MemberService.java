@@ -1,5 +1,6 @@
 package com.surfshop.service;
 
+import com.surfshop.dto.AdminAddMemberRequest;
 import com.surfshop.dto.ApiResponse;
 import com.surfshop.dto.MemberLoginRequest;
 import com.surfshop.dto.MemberLoginResponse;
@@ -154,6 +155,26 @@ public class MemberService {
     @Transactional(readOnly = true)
     public Optional<Membership> getMembership(Member member) {
         return membershipRepository.findTopByMemberAndActiveTrueOrderByCreatedAtDesc(member);
+    }
+
+    @Transactional
+    public ApiResponse<?> addMemberByAdmin(SurfShop shop, AdminAddMemberRequest req) {
+        if (memberRepository.existsByShopAndPhone(shop, req.getPhone())) {
+            return ApiResponse.error("해당 전화번호로 이미 등록된 회원이 있습니다.");
+        }
+        String dummyEmail = req.getPhone().replaceAll("-", "") + "@surfbook.local";
+        Member member = Member.builder()
+                .shop(shop)
+                .name(req.getName())
+                .phone(req.getPhone())
+                .email(dummyEmail)
+                .password(passwordEncoder.encode(java.util.UUID.randomUUID().toString()))
+                .boardType(Member.BoardType.LONGBOARD)
+                .surfLevel(Member.SurfLevel.BEGINNER)
+                .status(Member.MemberStatus.APPROVED)
+                .build();
+        memberRepository.save(member);
+        return ApiResponse.success("회원이 추가되었습니다.");
     }
 
     @Transactional

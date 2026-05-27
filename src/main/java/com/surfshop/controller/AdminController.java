@@ -1,6 +1,7 @@
 package com.surfshop.controller;
 
 import com.surfshop.dto.*;
+import com.surfshop.dto.AdminAddMemberRequest;
 import com.surfshop.entity.*;
 import com.surfshop.repository.KeepingMembershipRepository;
 import com.surfshop.repository.MembershipRepository;
@@ -393,6 +394,13 @@ public class AdminController {
         result.put("members", memberList);
         result.put("waitlist", waitlist);
         return ResponseEntity.ok(ApiResponse.success("수업 상세 조회", result));
+    }
+
+    @PostMapping("/members")
+    public ResponseEntity<ApiResponse<?>> addMember(
+            @Valid @RequestBody AdminAddMemberRequest req, HttpServletRequest request) {
+        Admin admin = (Admin) request.getAttribute("currentAdmin");
+        return ResponseEntity.ok(memberService.addMemberByAdmin(admin.getShop(), req));
     }
 
     @DeleteMapping("/members/{id}")

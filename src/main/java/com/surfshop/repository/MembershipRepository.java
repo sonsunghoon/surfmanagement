@@ -16,6 +16,9 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
     Optional<Membership> findTopByMemberAndActiveTrueOrderByCreatedAtDesc(Member member);
     void deleteAllByMember(Member member);
 
+    @Query("SELECT m FROM Membership m WHERE m.active = true AND m.endDate IS NOT NULL")
+    List<Membership> findAllActiveWithEndDate();
+
     @Query("SELECT m FROM Membership m WHERE m.active = true AND m.member.shop = :shop AND m.member.status = 'APPROVED'")
     List<Membership> findAllActiveByShop(@Param("shop") SurfShop shop);
 }
