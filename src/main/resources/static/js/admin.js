@@ -317,6 +317,18 @@ async function rejectMember(id) {
     else alert(data?.message || '오류가 발생했습니다.');
 }
 
+/* ── 전화번호 자동 포맷 (3-4-4) ── */
+function formatPhoneInput(input) {
+    const digits = input.value.replace(/\D/g, '').slice(0, 11);
+    if (digits.length <= 3) {
+        input.value = digits;
+    } else if (digits.length <= 7) {
+        input.value = digits.slice(0, 3) + '-' + digits.slice(3);
+    } else {
+        input.value = digits.slice(0, 3) + '-' + digits.slice(3, 7) + '-' + digits.slice(7);
+    }
+}
+
 /* ── 관리자 회원 추가 ── */
 function openAddMemberModal() {
     $('add-member-modal').classList.remove('hidden');
