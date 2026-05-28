@@ -83,8 +83,9 @@ public class ReservationService {
         lessonRepository.save(lesson);
 
         // 횟수권이면 횟수 복구
-        membershipRepository.findTopByMemberAndActiveTrueOrderByCreatedAtDesc(member)
-                .filter(ms -> ms.getType() == Membership.MembershipType.SESSION)
+        membershipRepository.findByMemberAndTypeInAndActiveTrueOrderByCreatedAtDesc(
+                        member, java.util.List.of(Membership.MembershipType.SESSION))
+                .stream().findFirst()
                 .ifPresent(ms -> ms.setUsedSessions(Math.max(0, ms.getUsedSessions() - 1)));
 
         String lessonDateStr = lesson.getStartTime().toLocalDate().format(DateTimeFormatter.ofPattern("MM월 dd일"));
