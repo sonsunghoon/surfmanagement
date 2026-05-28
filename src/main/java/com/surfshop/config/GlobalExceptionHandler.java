@@ -22,4 +22,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<?>> handleIllegalArgument(IllegalArgumentException ex) {
         return ResponseEntity.badRequest().body(ApiResponse.error(ex.getMessage()));
     }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<?>> handleAll(Exception ex) {
+        return ResponseEntity.internalServerError()
+                .body(ApiResponse.error("서버 오류: " + ex.getClass().getSimpleName() + " - " + ex.getMessage()));
+    }
 }
