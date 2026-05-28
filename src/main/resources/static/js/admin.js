@@ -478,7 +478,8 @@ async function openMembershipModal(memberId, memberName) {
     modalMemberId = memberId;
     $('modal-title').textContent = `${memberName} — 회원권`;
     $('modal-body').innerHTML = '<div class="text-center"><span class="spinner dark"></span></div>';
-    $('btn-assign-ms').textContent = '저장';
+    const btn = $('btn-assign-ms');
+    btn.disabled = false; btn.textContent = '저장';
     show('modal-overlay');
 
     const data = await api(C.API.ADMIN_MEMBERSHIP(memberId));
@@ -755,6 +756,8 @@ async function openKeepingModal(memberId, memberName) {
     keepingMemberId = memberId;
     $('keeping-modal-title').textContent = `${memberName} — 키핑권`;
     $('keeping-modal-body').innerHTML = '<div class="text-center"><span class="spinner dark"></span></div>';
+    const btnK = $('btn-save-keeping');
+    btnK.disabled = false; btnK.textContent = '등록';
     show('keeping-modal-overlay');
 
     const data = await api(C.API.ADMIN_KEEPING(memberId));
@@ -847,6 +850,8 @@ async function openSeasonModal(memberId, memberName) {
     seasonMemberId = memberId;
     $('season-modal-title').textContent = `${memberName} — 시즌방`;
     $('season-modal-body').innerHTML = '<div class="text-center"><span class="spinner dark"></span></div>';
+    const btnS = $('btn-save-season');
+    btnS.disabled = false; btnS.textContent = '등록';
     show('season-modal-overlay');
     const data = await api(C.API.ADMIN_SEASON(memberId));
     renderSeasonForm((data?.success) ? data.data : null);
