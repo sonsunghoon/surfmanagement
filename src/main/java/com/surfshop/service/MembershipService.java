@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -27,12 +28,14 @@ public class MembershipService {
             return ApiResponse.error("승인된 회원에게만 회원권을 부여할 수 있습니다.");
         }
 
-        Optional<Membership> existingOpt =
-                membershipRepository.findTopByMemberAndActiveTrueOrderByCreatedAtDesc(member);
+        List<Membership.MembershipType> lessonTypes = List.of(Membership.MembershipType.PERIOD, Membership.MembershipType.SESSION);
 
         // ── 기존 회원권 수정 (type == null) ──
         if (req.getType() == null) {
-            if (existingOpt.isEmpty()) return ApiResponse.error("수정할 활성 회원권이 없습니다.");
+            Optional<Membership> existingOpt = membershipRepository
+                    .findByMemberAndTypeInAndActiveTrueOrderByCreatedAtDesc(member, lessonTypes)
+                    .stream().findFirst();
+            if (existingOpt.isEmpty()) return ApiResponse.error("수정할 활성 수업 회원권이 없습니다.");
             Membership ms = existingOpt.get();
 
             if (ms.getType() == Membership.MembershipType.PERIOD) {
@@ -56,8 +59,14 @@ public class MembershipService {
             return ApiResponse.success("회원권이 수정되었습니다.");
         }
 
-        // ── 신규 발급 (기존 비활성화) ──
-        existingOpt.ifPresent(m -> m.setActive(false));
+        // ── 신규 발급 (같은 카테고리만 비활성화) ──
+        if (req.getType() == Membership.MembershipType.SEASON) {
+            membershipRepository.findTopByMemberAndTypeAndActiveTrueOrderByCreatedAtDesc(member, Membership.MembershipType.SEASON)
+                    .ifPresent(m -> m.setActive(false));
+        } else {
+            membershipRepository.findByMemberAndTypeInAndActiveTrueOrderByCreatedAtDesc(member, lessonTypes)
+                    .stream().findFirst().ifPresent(m -> m.setActive(false));
+        }
 
         if (req.getType() == Membership.MembershipType.PERIOD) {
             if (req.getStartDate() == null || req.getEndDate() == null) {
@@ -102,7 +111,15 @@ public class MembershipService {
 
     @Transactional(readOnly = true)
     public Optional<Membership> getActiveMembership(Long memberId) {
-        return memberRepository.findById(memberId)
-                .flatMap(m -> membershipRepository.findTopByMemberAndActiveTrueOrderByCreatedAtDesc(m));
+        List<Membership.MembershipType> lessonTypes = List.of(Membership.MembershipType.PERIOD, Membership.MembershipType.SESSION);
+        return memberRepository.findById(memberId).flatMap(m ->
+                membershipRepository.findByMemberAndTypeInAndActiveTrueOrderByCreatedAtDesc(m, lessonTypes)
+                        .stream().findFirst());
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Membership> getActiveSeasonMembership(Long memberId) {
+        return memberRepository.findById(memberId).flatMap(m ->
+                membershipRepository.findTopByMemberAndTypeAndActiveTrueOrderByCreatedAtDesc(m, Membership.MembershipType.SEASON));
     }
 }

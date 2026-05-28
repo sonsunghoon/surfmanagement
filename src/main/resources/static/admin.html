@@ -284,6 +284,23 @@
     </div>
 </div>
 
+<!-- ═══════════════════ 시즌방 모달 ═══════════════════ -->
+<div id="season-modal-overlay" class="modal-overlay hidden" onclick="closeSeasonModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <span id="season-modal-title">시즌방</span>
+            <button class="modal-close" onclick="closeSeasonModal()">✕</button>
+        </div>
+        <div class="modal-body" id="season-modal-body">
+            <div class="text-center"><span class="spinner dark"></span></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeSeasonModal()">취소</button>
+            <button class="btn btn-primary" id="btn-save-season" onclick="submitSeason()">등록</button>
+        </div>
+    </div>
+</div>
+
 <!-- ═══════════════════ 수업 생성 모달 ═══════════════════ -->
 <div id="lesson-modal-overlay" class="modal-overlay hidden" onclick="closeLessonModal()">
     <div class="modal-box modal-box-lg" onclick="event.stopPropagation()">

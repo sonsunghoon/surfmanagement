@@ -14,6 +14,8 @@ import java.util.Optional;
 @Repository
 public interface MembershipRepository extends JpaRepository<Membership, Long> {
     Optional<Membership> findTopByMemberAndActiveTrueOrderByCreatedAtDesc(Member member);
+    Optional<Membership> findTopByMemberAndTypeAndActiveTrueOrderByCreatedAtDesc(Member member, Membership.MembershipType type);
+    List<Membership> findByMemberAndTypeInAndActiveTrueOrderByCreatedAtDesc(Member member, List<Membership.MembershipType> types);
     void deleteAllByMember(Member member);
 
     @Query("SELECT m FROM Membership m WHERE m.active = true AND m.endDate IS NOT NULL")

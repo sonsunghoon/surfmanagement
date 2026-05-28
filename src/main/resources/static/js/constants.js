@@ -18,6 +18,7 @@ const SURF_SHOP_CONSTANTS = {
         ADMIN_REJECT:     (id) => `/api/admin/members/${id}/reject`,
         ADMIN_MEMBERSHIP: (id) => `/api/admin/members/${id}/membership`,
         ADMIN_KEEPING:    (id) => `/api/admin/members/${id}/keeping`,
+        ADMIN_SEASON:     (id) => `/api/admin/members/${id}/season`,
         ADMIN_LESSONS_CREATE: '/api/admin/lessons',
         ADMIN_LESSON_DETAIL:  (id) => `/api/admin/lessons/${id}`,
         ADMIN_LESSONS_DELETE: '/api/admin/lessons',

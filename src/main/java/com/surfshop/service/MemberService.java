@@ -154,7 +154,9 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public Optional<Membership> getMembership(Member member) {
-        return membershipRepository.findTopByMemberAndActiveTrueOrderByCreatedAtDesc(member);
+        return membershipRepository.findByMemberAndTypeInAndActiveTrueOrderByCreatedAtDesc(
+                member, java.util.List.of(Membership.MembershipType.PERIOD, Membership.MembershipType.SESSION))
+                .stream().findFirst();
     }
 
     @Transactional

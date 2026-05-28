@@ -237,11 +237,15 @@ function renderMemberItem(m) {
     const deleteMemberBtn = `<button class="btn btn-sm" style="color:#ef4444;border:1px solid #ef4444;background:transparent" onclick="deleteMemberAccount(${m.id}, '${escapeHtml(m.name)}')">삭제</button>`;
 
     const membershipHtml = renderMembershipBadge(m.membership);
+    const seasonHtml = m.seasonMembership ? `<span class="badge badge-period" style="background:#e0f2fe;color:#0369a1">🏄 시즌방 ${m.seasonMembership.remainDays}일</span>` : '';
     const keepingHtml = m.keeping ? renderKeepingBadge(m.keeping) : '';
 
     const membershipBtn = m.statusCode === C.STATUS.APPROVED
         ? `<button class="btn btn-outline btn-sm" onclick="openMembershipModal(${m.id}, '${escapeHtml(m.name)}')">
-               ${m.membership ? '회원권 변경' : '회원권 부여'}
+               ${m.membership ? '수업권 변경' : '수업권 부여'}
+           </button>
+           <button class="btn btn-outline btn-sm" style="color:#0369a1;border-color:#0369a1" onclick="openSeasonModal(${m.id}, '${escapeHtml(m.name)}')">
+               ${m.seasonMembership ? '시즌방 변경' : '시즌방 등록'}
            </button>
            <button class="btn btn-outline btn-sm" style="color:#3B82F6;border-color:#3B82F6" onclick="openKeepingModal(${m.id}, '${escapeHtml(m.name)}')">
                ${m.keeping ? '키핑권 변경' : '키핑권 부여'}
@@ -266,6 +270,7 @@ function renderMemberItem(m) {
                 <div class="member-meta" style="margin-top:5px">
                     <span class="badge ${badgeClass}">${escapeHtml(m.status)}</span>
                     ${membershipHtml}
+                    ${seasonHtml}
                     ${keepingHtml}
                 </div>
                 <div style="font-size:11px;color:var(--fg-neutral-tertiary);margin-top:3px">${escapeHtml(m.email)}</div>
@@ -492,7 +497,6 @@ function renderMembershipForm(ms) {
                 <div class="radio-group">
                     <label class="radio-label"><input type="radio" name="ms-type" value="PERIOD" checked onchange="onNewTypeChange()"><span>기간권</span></label>
                     <label class="radio-label"><input type="radio" name="ms-type" value="SESSION" onchange="onNewTypeChange()"><span>횟수권</span></label>
-                    <label class="radio-label"><input type="radio" name="ms-type" value="SEASON" onchange="onNewTypeChange()"><span>시즌방 (1년)</span></label>
                 </div>
             </div>
             <div id="new-period-opts">
@@ -834,6 +838,60 @@ function showKeepingAlert(msg) {
 function closeKeepingModal() {
     hide('keeping-modal-overlay');
     keepingMemberId = null;
+}
+
+/* ── Season Modal ── */
+let seasonMemberId = null;
+
+async function openSeasonModal(memberId, memberName) {
+    seasonMemberId = memberId;
+    $('season-modal-title').textContent = `${memberName} — 시즌방`;
+    $('season-modal-body').innerHTML = '<div class="text-center"><span class="spinner dark"></span></div>';
+    show('season-modal-overlay');
+    const data = await api(C.API.ADMIN_SEASON(memberId));
+    renderSeasonForm((data?.success) ? data.data : null);
+}
+
+function closeSeasonModal() {
+    hide('season-modal-overlay');
+    seasonMemberId = null;
+}
+
+function renderSeasonForm(s) {
+    const today = new Date().toISOString().split('T')[0];
+    $('season-modal-body').innerHTML = `
+        <div id="season-modal-alert" class="alert alert-danger hidden"></div>
+        ${s ? `<div style="background:#e0f2fe;border:1px solid #7dd3fc;border-radius:var(--radius);padding:12px 14px;margin-bottom:16px;font-size:13px">
+            <div style="font-weight:700;margin-bottom:4px">🏄 현재 시즌방</div>
+            <div>${escapeHtml(s.startDate)} ~ ${escapeHtml(s.endDate)}
+            &nbsp;·&nbsp; ${s.expired ? '<span style="color:var(--danger)">만료됨</span>' : `<b>${s.remainDays}일 남음</b>`}</div>
+        </div>` : ''}
+        <div class="form-group">
+            <label class="form-label">시작일 <span class="required">*</span></label>
+            <input type="date" id="s-start" class="form-control" value="${today}">
+            <small style="color:var(--gray-500);font-size:12px;margin-top:4px;display:block">종료일은 시작일로부터 1년 후 자동 설정됩니다.</small>
+        </div>`;
+    $('btn-save-season').textContent = s ? '시즌방 변경' : '시즌방 등록';
+}
+
+async function submitSeason() {
+    const startDate = $('s-start')?.value;
+    if (!startDate) { showSeasonAlert('시작일을 입력해주세요.'); return; }
+    const btn = $('btn-save-season');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+    try {
+        const data = await api(C.API.ADMIN_SEASON(seasonMemberId), {
+            method: 'POST',
+            body: JSON.stringify({ startDate }),
+        });
+        if (data?.success) { closeSeasonModal(); loadMembers(); }
+        else { showSeasonAlert(data?.message || '오류가 발생했습니다.'); btn.disabled = false; btn.textContent = '등록'; }
+    } catch { showSeasonAlert(C.MESSAGES.NETWORK_ERROR); btn.disabled = false; btn.textContent = '등록'; }
+}
+
+function showSeasonAlert(msg) {
+    const el = $('season-modal-alert');
+    if (el) { el.textContent = msg; el.classList.remove('hidden'); }
 }
 
 /* ── Lesson Modal ── */

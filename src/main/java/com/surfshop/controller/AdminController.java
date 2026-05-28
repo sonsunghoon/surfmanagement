@@ -119,9 +119,12 @@ public class AdminController {
             map.put("status", m.getStatus().getLabel());
             map.put("statusCode", m.getStatus().name());
             map.put("createdAt", m.getCreatedAt().toString());
-            memberService.getMembership(m).ifPresentOrElse(
+            membershipService.getActiveMembership(m.getId()).ifPresentOrElse(
                     ms -> map.put("membership", buildMembershipMap(ms)),
                     () -> map.put("membership", null));
+            membershipService.getActiveSeasonMembership(m.getId()).ifPresentOrElse(
+                    ms -> map.put("seasonMembership", buildMembershipMap(ms)),
+                    () -> map.put("seasonMembership", null));
             keepingMembershipRepository.findTopByMemberAndActiveTrueOrderByCreatedAtDesc(m)
                     .ifPresentOrElse(
                             k -> map.put("keeping", buildKeepingMap(k)),
@@ -157,6 +160,24 @@ public class AdminController {
             return ResponseEntity.ok(ApiResponse.success("회원권 조회 성공", buildMembershipMap(msOpt.get())));
         }
         return ResponseEntity.ok(ApiResponse.success("회원권 없음", null));
+    }
+
+    @GetMapping("/members/{id}/season")
+    public ResponseEntity<ApiResponse<?>> getSeasonMembership(@PathVariable Long id) {
+        Optional<Membership> msOpt = membershipService.getActiveSeasonMembership(id);
+        if (msOpt.isPresent()) {
+            return ResponseEntity.ok(ApiResponse.success("시즌방 조회 성공", buildMembershipMap(msOpt.get())));
+        }
+        return ResponseEntity.ok(ApiResponse.success("시즌방 없음", null));
+    }
+
+    @PostMapping("/members/{id}/season")
+    public ResponseEntity<ApiResponse<?>> assignSeasonMembership(
+            @PathVariable Long id, @RequestBody MembershipAssignRequest request) {
+        request.setType(Membership.MembershipType.SEASON);
+        ApiResponse<?> response = membershipService.assignMembership(id, request);
+        if (response.isSuccess()) return ResponseEntity.ok(response);
+        return ResponseEntity.badRequest().body(response);
     }
 
     /* ── 키핑권 ── */
