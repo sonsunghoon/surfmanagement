@@ -17,9 +17,13 @@ public class EmailService {
     @Value("${spring.mail.username:}")
     private String fromEmail;
 
-    public void sendMembershipExpiryWarning(String toEmail, String memberName,
-                                             String shopName, String expiryDate, int daysLeft) {
-        if (fromEmail.isBlank() || toEmail.contains("@surfbook.local")) return;
+    public boolean sendMembershipExpiryWarning(String toEmail, String memberName,
+                                               String shopName, String expiryDate, int daysLeft) {
+        if (fromEmail.isBlank()) {
+            log.warn("이메일 발송 건너뜀: MAIL_USERNAME 환경변수 미설정");
+            return false;
+        }
+        if (toEmail.contains("@surfbook.local")) return false;
         try {
             SimpleMailMessage msg = new SimpleMailMessage();
             msg.setFrom(fromEmail);
@@ -32,8 +36,11 @@ public class EmailService {
                 "감사합니다.\n" + shopName
             );
             mailSender.send(msg);
+            log.info("이메일 발송 성공: {} → {}", memberName, toEmail);
+            return true;
         } catch (Exception e) {
-            log.warn("이메일 발송 실패: {} → {}", toEmail, e.getMessage());
+            log.error("이메일 발송 실패: {} → {} | {}", memberName, toEmail, e.getMessage());
+            return false;
         }
     }
 }

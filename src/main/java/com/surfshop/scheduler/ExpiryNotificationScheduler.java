@@ -29,23 +29,23 @@ public class ExpiryNotificationScheduler {
     }
 
     @Transactional(readOnly = true)
-    public int sendExpiryWarningsForDays(long targetDays) {
+    public int[] sendExpiryWarningsForDays(long targetDays) {
         LocalDate today = LocalDate.now();
         List<Membership> activeMemberships = membershipRepository.findAllActiveWithEndDate();
-        int count = 0;
+        int matched = 0, sent = 0;
         for (Membership ms : activeMemberships) {
             if (ms.getEndDate() == null) continue;
             long daysLeft = ChronoUnit.DAYS.between(today, ms.getEndDate());
             if (daysLeft == targetDays) {
+                matched++;
                 Member member = ms.getMember();
-                emailService.sendMembershipExpiryWarning(
-                    member.getEmail(), member.getName(),
-                    member.getShop().getName(), ms.getEndDate().toString(), (int) daysLeft
-                );
-                log.info("만료 알림 발송: {} → {} ({}일 남음)", member.getName(), member.getEmail(), daysLeft);
-                count++;
+                if (emailService.sendMembershipExpiryWarning(
+                        member.getEmail(), member.getName(),
+                        member.getShop().getName(), ms.getEndDate().toString(), (int) daysLeft)) {
+                    sent++;
+                }
             }
         }
-        return count;
+        return new int[]{matched, sent};
     }
 }

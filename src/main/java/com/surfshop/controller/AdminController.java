@@ -544,8 +544,9 @@ public class AdminController {
     public ResponseEntity<ApiResponse<?>> testExpiryEmail(
             @RequestParam(defaultValue = "7") long days,
             HttpServletRequest request) {
-        int count = expiryNotificationScheduler.sendExpiryWarningsForDays(days);
-        return ResponseEntity.ok(ApiResponse.success(count + "건 발송 완료 (만료 " + days + "일 전 기준)"));
+        int[] result = expiryNotificationScheduler.sendExpiryWarningsForDays(days);
+        return ResponseEntity.ok(ApiResponse.success(
+            "매칭 " + result[0] + "건, 실제 발송 " + result[1] + "건 (만료 " + days + "일 전 기준)"));
     }
 
     private String extractToken(HttpServletRequest request) {
