@@ -104,7 +104,7 @@ public class AdminService {
     @Transactional
     public void deleteAdminAccount(Admin admin) {
         SurfShop shop = admin.getShop();
-        List<com.surfshop.entity.Member> members = memberRepository.findByShop(shop);
+        List<com.surfshop.entity.Member> members = memberRepository.findByShopOrderByCreatedAtDesc(shop);
         for (com.surfshop.entity.Member member : members) {
             memberNotificationRepository.deleteAllByMember(member);
             reservationRepository.deleteAllByMember(member);
