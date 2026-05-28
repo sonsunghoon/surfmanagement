@@ -40,8 +40,9 @@ public class ReservationService {
             if (ms.getEndDate() != null && ms.getEndDate().isBefore(LocalDate.now())) {
                 return ApiResponse.error("기간권이 만료되었습니다.");
             }
-        } else {
-            int remaining = ms.getTotalSessions() - ms.getUsedSessions();
+        } else if (ms.getType() == Membership.MembershipType.SESSION) {
+            int total = ms.getTotalSessions() != null ? ms.getTotalSessions() : 0;
+            int remaining = total - ms.getUsedSessions();
             if (remaining <= 0) return ApiResponse.error("남은 횟수가 없습니다.");
             ms.setUsedSessions(ms.getUsedSessions() + 1);
         }
@@ -176,8 +177,9 @@ public class ReservationService {
                     entry.setStatus(WaitlistEntry.WaitlistStatus.CANCELLED);
                     continue;
                 }
-            } else {
-                int remaining = ms.getTotalSessions() - ms.getUsedSessions();
+            } else if (ms.getType() == Membership.MembershipType.SESSION) {
+                int total = ms.getTotalSessions() != null ? ms.getTotalSessions() : 0;
+                int remaining = total - ms.getUsedSessions();
                 if (remaining <= 0) {
                     entry.setStatus(WaitlistEntry.WaitlistStatus.CANCELLED);
                     continue;
@@ -203,7 +205,8 @@ public class ReservationService {
 
     private Membership getValidMembership(Member member) {
         return membershipRepository
-                .findTopByMemberAndActiveTrueOrderByCreatedAtDesc(member)
-                .orElse(null);
+                .findByMemberAndTypeInAndActiveTrueOrderByCreatedAtDesc(
+                        member, java.util.List.of(Membership.MembershipType.PERIOD, Membership.MembershipType.SESSION))
+                .stream().findFirst().orElse(null);
     }
 }

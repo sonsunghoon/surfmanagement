@@ -387,7 +387,8 @@ public class AdminController {
                             mm.put("membershipDetail", remain < 0 ? "만료" : remain + "일 남음");
                             mm.put("membershipExpired", remain < 0);
                         } else {
-                            int remain = ms.getTotalSessions() - ms.getUsedSessions();
+                            int total = ms.getTotalSessions() != null ? ms.getTotalSessions() : 0;
+                            int remain = total - ms.getUsedSessions();
                             mm.put("membershipDetail", remain + "회 남음");
                             mm.put("membershipExpired", remain <= 0);
                         }
@@ -490,9 +491,10 @@ public class AdminController {
             m.put("remainDays", Math.max(remainDays, 0));
             m.put("expired", remainDays < 0);
         } else {
-            m.put("totalSessions", ms.getTotalSessions());
+            int total = ms.getTotalSessions() != null ? ms.getTotalSessions() : 0;
+            m.put("totalSessions", total);
             m.put("usedSessions", ms.getUsedSessions());
-            m.put("remainSessions", ms.getTotalSessions() - ms.getUsedSessions());
+            m.put("remainSessions", total - ms.getUsedSessions());
         }
         return m;
     }
