@@ -506,6 +506,10 @@ function renderMembershipForm(ms) {
                         <input type="date" id="ms-end" class="form-control">
                     </div>
                 </div>
+                <div style="display:flex;gap:8px;margin-top:4px">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="autoSetEndDate('ms-start','ms-end',12)">1년</button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="autoSetEndDate('ms-start','ms-end',6)">6개월</button>
+                </div>
             </div>
             <div id="new-session-opts" class="hidden">
                 <div class="form-row">
@@ -584,6 +588,14 @@ function updateAdjPreview() {
     else { preview.textContent = `${adj}회 차감`; preview.style.color = 'var(--danger)'; }
 }
 
+function autoSetEndDate(startId, endId, months) {
+    const startVal = $(startId)?.value;
+    if (!startVal) return;
+    const d = new Date(startVal);
+    d.setMonth(d.getMonth() + months);
+    $(endId).value = d.toISOString().split('T')[0];
+}
+
 function onNewTypeChange() {
     const type = document.querySelector('input[name="ms-type"]:checked')?.value;
     if (type === 'PERIOD') { show('new-period-opts'); hide('new-session-opts'); hide('new-season-opts'); }
@@ -616,6 +628,10 @@ function switchToNewMembership(currentType) {
                     <label class="form-label">종료일 <span class="required">*</span></label>
                     <input type="date" id="ms-end" class="form-control">
                 </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:4px">
+                <button type="button" class="btn btn-outline btn-sm" onclick="autoSetEndDate('ms-start','ms-end',12)">1년</button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="autoSetEndDate('ms-start','ms-end',6)">6개월</button>
             </div>
         </div>
         <div id="new-session-opts" ${currentType!=='SESSION'?'class="hidden"':''}>
@@ -738,6 +754,10 @@ function renderKeepingForm(k) {
                 <label class="form-label">종료일</label>
                 <input type="date" id="k-end" class="form-control" value="${k?.endDate || ''}">
             </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px;margin-bottom:12px">
+            <button type="button" class="btn btn-outline btn-sm" onclick="autoSetEndDate('k-start','k-end',12)">1년</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="autoSetEndDate('k-start','k-end',6)">6개월</button>
         </div>
         <div class="form-group">
             <label class="form-label">보드 브랜드</label>
