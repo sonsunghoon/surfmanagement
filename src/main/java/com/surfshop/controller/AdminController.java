@@ -7,6 +7,7 @@ import com.surfshop.repository.KeepingMembershipRepository;
 import com.surfshop.repository.MembershipRepository;
 import com.surfshop.repository.ReservationRepository;
 import com.surfshop.repository.WaitlistRepository;
+import com.surfshop.scheduler.ExpiryNotificationScheduler;
 import com.surfshop.service.*;
 import com.surfshop.repository.MemberRepository;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 public class AdminController {
 
     private final AdminService adminService;
+    private final ExpiryNotificationScheduler expiryNotificationScheduler;
     private final MemberService memberService;
     private final LessonService lessonService;
     private final MembershipService membershipService;
@@ -507,6 +509,14 @@ public class AdminController {
             map.put("windInfo", l.getWindInfo());
             return map;
         }).collect(Collectors.toList());
+    }
+
+    @PostMapping("/test/send-expiry-email")
+    public ResponseEntity<ApiResponse<?>> testExpiryEmail(
+            @RequestParam(defaultValue = "7") long days,
+            HttpServletRequest request) {
+        int count = expiryNotificationScheduler.sendExpiryWarningsForDays(days);
+        return ResponseEntity.ok(ApiResponse.success(count + "건 발송 완료 (만료 " + days + "일 전 기준)"));
     }
 
     private String extractToken(HttpServletRequest request) {

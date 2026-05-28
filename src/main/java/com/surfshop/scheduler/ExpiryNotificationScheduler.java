@@ -21,27 +21,28 @@ public class ExpiryNotificationScheduler {
     private final MembershipRepository membershipRepository;
     private final EmailService emailService;
 
-    // 매일 오전 9시 실행
     @Scheduled(cron = "0 0 9 * * *")
     public void sendExpiryWarnings() {
+        sendExpiryWarningsForDays(7);
+    }
+
+    public int sendExpiryWarningsForDays(long targetDays) {
         LocalDate today = LocalDate.now();
         List<Membership> activeMemberships = membershipRepository.findAllActiveWithEndDate();
-
+        int count = 0;
         for (Membership ms : activeMemberships) {
             if (ms.getEndDate() == null) continue;
             long daysLeft = ChronoUnit.DAYS.between(today, ms.getEndDate());
-
-            if (daysLeft == 7) {
+            if (daysLeft == targetDays) {
                 Member member = ms.getMember();
                 emailService.sendMembershipExpiryWarning(
-                    member.getEmail(),
-                    member.getName(),
-                    member.getShop().getName(),
-                    ms.getEndDate().toString(),
-                    (int) daysLeft
+                    member.getEmail(), member.getName(),
+                    member.getShop().getName(), ms.getEndDate().toString(), (int) daysLeft
                 );
                 log.info("만료 알림 발송: {} → {} ({}일 남음)", member.getName(), member.getEmail(), daysLeft);
+                count++;
             }
         }
+        return count;
     }
 }
