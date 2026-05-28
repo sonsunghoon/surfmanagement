@@ -531,7 +531,6 @@ function renderMembershipForm(ms) {
                 </div>
             </div>`;
         $('btn-assign-ms').textContent = '회원권 발급';
-        $('btn-assign-ms').onclick = submitNewMembership;
         return;
     }
 
@@ -556,7 +555,6 @@ function renderMembershipForm(ms) {
             </div>
             <button class="btn btn-outline btn-sm" style="margin-top:4px" onclick="switchToNewMembership('PERIOD')">새로 발급하기</button>`;
         $('btn-assign-ms').textContent = '기간 변경';
-        $('btn-assign-ms').onclick = submitModifyPeriod;
     } else if (ms.type === 'SEASON') {
         const expired = ms.expired;
         $('modal-body').innerHTML = `
@@ -578,7 +576,6 @@ function renderMembershipForm(ms) {
             </div>
             <button class="btn btn-outline btn-sm" style="margin-top:4px" onclick="switchToNewMembership('SEASON')">새로 발급하기</button>`;
         $('btn-assign-ms').textContent = '기간 변경';
-        $('btn-assign-ms').onclick = submitModifyPeriod;
     } else {
         const remain = ms.remainSessions;
         $('modal-body').innerHTML = `
@@ -598,7 +595,6 @@ function renderMembershipForm(ms) {
             </div>
             <button class="btn btn-outline btn-sm" style="margin-top:4px" onclick="switchToNewMembership('SESSION')">새로 발급하기</button>`;
         $('btn-assign-ms').textContent = '횟수 조정';
-        $('btn-assign-ms').onclick = submitAdjustSession;
     }
 }
 
@@ -676,7 +672,6 @@ function switchToNewMembership(currentType) {
             </div>
         </div>`;
     $('btn-assign-ms').textContent = '새로 발급';
-    $('btn-assign-ms').onclick = submitNewMembership;
 }
 
 async function submitNewMembership() {
@@ -735,6 +730,12 @@ async function submitMembership(body) {
     }
 }
 
+function handleMembershipSave() {
+    if ($('ms-adj')) submitAdjustSession();
+    else if (document.querySelector('input[name="ms-type"]')) submitNewMembership();
+    else submitModifyPeriod();
+}
+
 function showModalAlert(msg) {
     const el = $('modal-alert');
     if (el) { el.textContent = msg; el.classList.remove('hidden'); }
@@ -791,7 +792,7 @@ function renderKeepingForm(k) {
             <div style="font-size:12px;color:var(--gray-500);margin-top:4px">이미지 URL을 입력하면 회원 화면에 사진이 표시됩니다.</div>
         </div>`;
     $('btn-save-keeping').textContent = k ? '키핑권 변경' : '키핑권 등록';
-    $('btn-save-keeping').onclick = submitKeeping;
+    $('btn-save-keeping')
 }
 
 async function submitKeeping() {
