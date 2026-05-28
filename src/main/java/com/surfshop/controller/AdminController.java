@@ -356,8 +356,10 @@ public class AdminController {
                     mm.put("boardType", m.getBoardType().getLabel());
                     memberService.getMembership(m).ifPresentOrElse(ms -> {
                         mm.put("membershipType", ms.getType().getLabel());
-                        if (ms.getType() == Membership.MembershipType.PERIOD) {
-                            long remain = java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), ms.getEndDate());
+                        if (ms.getType() == Membership.MembershipType.PERIOD || ms.getType() == Membership.MembershipType.SEASON) {
+                            long remain = ms.getEndDate() != null
+                                    ? java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), ms.getEndDate())
+                                    : 0;
                             mm.put("membershipDetail", remain < 0 ? "만료" : remain + "일 남음");
                             mm.put("membershipExpired", remain < 0);
                         } else {
@@ -456,10 +458,11 @@ public class AdminController {
         m.put("type", ms.getType().name());
         m.put("typeLabel", ms.getType().getLabel());
         m.put("startDate", ms.getStartDate().toString());
-        if (ms.getType() == Membership.MembershipType.PERIOD) {
-            m.put("endDate", ms.getEndDate().toString());
-            long remainDays = java.time.temporal.ChronoUnit.DAYS.between(
-                    java.time.LocalDate.now(), ms.getEndDate());
+        if (ms.getType() == Membership.MembershipType.PERIOD || ms.getType() == Membership.MembershipType.SEASON) {
+            m.put("endDate", ms.getEndDate() != null ? ms.getEndDate().toString() : null);
+            long remainDays = ms.getEndDate() != null
+                    ? java.time.temporal.ChronoUnit.DAYS.between(java.time.LocalDate.now(), ms.getEndDate())
+                    : 0;
             m.put("remainDays", Math.max(remainDays, 0));
             m.put("expired", remainDays < 0);
         } else {
