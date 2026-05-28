@@ -316,10 +316,12 @@ public class GuestController {
                 msData.put("remainDays", Math.max(remainDays, 0));
                 msData.put("expired", remainDays < 0);
                 msData.put("canReserve", remainDays >= 0);
-            } else {
-                int remaining = ms.getTotalSessions() - ms.getUsedSessions();
-                msData.put("totalSessions", ms.getTotalSessions());
-                msData.put("usedSessions", ms.getUsedSessions());
+            } else if (ms.getType() == Membership.MembershipType.SESSION) {
+                int total = ms.getTotalSessions() != null ? ms.getTotalSessions() : 0;
+                int used  = ms.getUsedSessions();
+                int remaining = total - used;
+                msData.put("totalSessions", total);
+                msData.put("usedSessions", used);
                 msData.put("remainSessions", remaining);
                 msData.put("canReserve", remaining > 0);
             }

@@ -252,14 +252,16 @@ public class AdminController {
 
         for (Membership ms : activeMemberships) {
             Map<String, Object> memberMap = buildExpiryMemberMap(ms, today);
-            if (ms.getType() == Membership.MembershipType.PERIOD) {
+            if (ms.getType() == Membership.MembershipType.PERIOD || ms.getType() == Membership.MembershipType.SEASON) {
+                if (ms.getEndDate() == null) { activeCount++; continue; }
                 long daysLeft = ChronoUnit.DAYS.between(today, ms.getEndDate());
                 if (daysLeft < 0) continue;
                 if (daysLeft <= 7)  d7Members.add(memberMap);
                 else if (daysLeft <= 30) d30Members.add(memberMap);
                 else activeCount++;
             } else {
-                int sessLeft = ms.getTotalSessions() - ms.getUsedSessions();
+                int total = ms.getTotalSessions() != null ? ms.getTotalSessions() : 0;
+                int sessLeft = total - ms.getUsedSessions();
                 if (sessLeft <= 0) continue;
                 if (sessLeft <= 2)  d7Members.add(memberMap);
                 else if (sessLeft <= 5) d30Members.add(memberMap);
@@ -288,17 +290,18 @@ public class AdminController {
         map.put("phone", member.getPhone());
         map.put("membershipType", ms.getType().getLabel());
 
-        if (ms.getType() == Membership.MembershipType.PERIOD) {
-            long daysLeft = ChronoUnit.DAYS.between(today, ms.getEndDate());
-            map.put("endDate", ms.getEndDate().toString());
+        if (ms.getType() == Membership.MembershipType.PERIOD || ms.getType() == Membership.MembershipType.SEASON) {
+            long daysLeft = ms.getEndDate() != null ? ChronoUnit.DAYS.between(today, ms.getEndDate()) : 9999L;
+            if (ms.getEndDate() != null) map.put("endDate", ms.getEndDate().toString());
             map.put("daysLeft", daysLeft);
             map.put("urgencyLabel", daysLeft <= 7 ? "D-" + daysLeft : daysLeft + "일 남음");
             map.put("urgencyClass", daysLeft <= 7 ? "danger" : "warn");
             map.put("sortKey", daysLeft);
         } else {
-            int sessLeft = ms.getTotalSessions() - ms.getUsedSessions();
+            int total = ms.getTotalSessions() != null ? ms.getTotalSessions() : 0;
+            int sessLeft = total - ms.getUsedSessions();
             map.put("sessionsLeft", sessLeft);
-            map.put("totalSessions", ms.getTotalSessions());
+            map.put("totalSessions", total);
             map.put("urgencyLabel", sessLeft + "회 남음");
             map.put("urgencyClass", sessLeft <= 2 ? "danger" : "warn");
             map.put("sortKey", (long) sessLeft);
