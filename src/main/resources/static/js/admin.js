@@ -518,6 +518,13 @@ function renderMembershipForm(ms) {
                         <input type="date" id="ms-start2" class="form-control" value="${today}">
                     </div>
                 </div>
+            </div>
+            <div id="new-season-opts" class="hidden">
+                <div class="form-group">
+                    <label class="form-label">시작일 <span class="required">*</span></label>
+                    <input type="date" id="ms-season-start" class="form-control" value="${today}">
+                    <small style="color:var(--gray-500);font-size:12px">종료일은 시작일로부터 1년 후 자동 설정됩니다.</small>
+                </div>
             </div>`;
         $('btn-assign-ms').textContent = '회원권 발급';
         $('btn-assign-ms').onclick = submitNewMembership;
