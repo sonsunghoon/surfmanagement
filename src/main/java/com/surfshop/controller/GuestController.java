@@ -11,6 +11,7 @@ import com.surfshop.repository.WaitlistRepository;
 import com.surfshop.service.LessonService;
 import com.surfshop.service.MemberNotificationService;
 import com.surfshop.service.MemberService;
+import com.surfshop.service.MembershipService;
 import com.surfshop.service.ReservationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
 public class GuestController {
 
     private final MemberService memberService;
+    private final MembershipService membershipService;
     private final LessonService lessonService;
     private final ReservationService reservationService;
     private final MemberNotificationService memberNotificationService;
@@ -342,6 +344,23 @@ public class GuestController {
                     }
                     data.put("keeping", kData);
                 }, () -> data.put("keeping", null));
+
+        membershipService.getActiveSeasonMembership(member.getId())
+                .ifPresentOrElse(ms -> {
+                    Map<String, Object> sData = new LinkedHashMap<>();
+                    sData.put("id", ms.getId());
+                    sData.put("startDate", ms.getStartDate().toString());
+                    sData.put("endDate", ms.getEndDate() != null ? ms.getEndDate().toString() : null);
+                    if (ms.getEndDate() != null) {
+                        long remainDays = ChronoUnit.DAYS.between(LocalDate.now(), ms.getEndDate());
+                        sData.put("remainDays", Math.max(remainDays, 0));
+                        sData.put("expired", remainDays < 0);
+                    } else {
+                        sData.put("remainDays", null);
+                        sData.put("expired", false);
+                    }
+                    data.put("season", sData);
+                }, () -> data.put("season", null));
 
         return data;
     }

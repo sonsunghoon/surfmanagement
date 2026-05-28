@@ -1808,14 +1808,35 @@ html, body {
 }
 
 /* ─── 키핑권 카드 — light sky-blue pastel ─── */
-#keeping-card .ms-card {
+#keeping-card .ms-card:not(.ms-card-season) {
   background: linear-gradient(180deg, #BAE6FD 0%, #7DD3FC 100%);
   border: none;
 }
 
-#keeping-card .ms-type   { color: #0C4A6E; opacity: 1; }
-#keeping-card .ms-detail { color: #0C4A6E; opacity: 0.75; }
-#keeping-card .ms-status { background: rgba(255,255,255,0.6); color: #0369A1; }
+#keeping-card .ms-card:not(.ms-card-season) .ms-type   { color: #0C4A6E; opacity: 1; }
+#keeping-card .ms-card:not(.ms-card-season) .ms-detail { color: #0C4A6E; opacity: 0.75; }
+#keeping-card .ms-card:not(.ms-card-season) .ms-status { background: rgba(255,255,255,0.6); color: #0369A1; }
+
+/* ─── 시즌방 카드 — light green pastel ─── */
+.ms-card-season {
+  background: linear-gradient(180deg, #BBF7D0 0%, #86EFAC 100%);
+  border: none;
+}
+.ms-card-season .ms-type   { color: #14532D; opacity: 1; }
+.ms-card-season .ms-remain-num { color: #15803D; }
+.ms-card-season .ms-remain-unit { color: #15803D; }
+.ms-card-season .ms-detail { color: #14532D; opacity: 0.75; }
+.ms-card-season .ms-status { background: rgba(255,255,255,0.6); color: #15803D; }
+
+/* ─── 키핑/시즌 좌우 분할 ─── */
+.keeping-split-grid {
+  display: flex;
+  gap: 8px;
+}
+.keeping-split-cell {
+  flex: 1;
+  min-width: 0;
+}
 
 /* ─── Modal Large ─── */
 .modal-box-lg { max-width: 560px; }

@@ -43,7 +43,7 @@ function renderPage(d) {
     if (heroShop) heroShop.textContent = d.shopName || '';
     if (heroName) heroName.textContent = `안녕하세요, ${d.name}님 👋`;
     renderMembershipCard(d.membership);
-    renderKeepingCard(d.keeping);
+    renderKeepingCard(d.keeping, d.season);
     renderMemberInfo(d);
     const now = new Date();
     calYear  = now.getFullYear();
@@ -339,7 +339,7 @@ async function refreshAfterAction() {
     if (info?.success) {
         memberData = info.data;
         renderMembershipCard(memberData.membership);
-        renderKeepingCard(memberData.keeping);
+        renderKeepingCard(memberData.keeping, memberData.season);
     }
 }
 
@@ -424,28 +424,55 @@ function renderSessionDots(total, used) {
 /* ══════════════
    키핑권 카드
 ══════════════ */
-function renderKeepingCard(k) {
+function renderKeepingCard(k, season) {
     const card = $('keeping-card');
-    if (!k) { card.innerHTML = ''; return; }
+    if (!k && !season) { card.innerHTML = ''; return; }
 
-    const expired = k.expired;
-    const remainText = k.remainDays !== null
-        ? (expired ? '만료됨' : `${k.remainDays}일 남음`)
-        : '기간 무제한';
-    const statusCls = expired ? 'ms-status-danger' : 'ms-status-ok';
-
-    card.innerHTML = `
-        <div class="ms-card ${expired ? 'ms-card-expired' : ''}">
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
-                <div style="flex:1">
+    const keepingHtml = k ? (() => {
+        const expired = k.expired;
+        const remainText = k.remainDays !== null
+            ? (expired ? '만료됨' : `${k.remainDays}일 남음`)
+            : '기간 무제한';
+        const statusCls = expired ? 'ms-status-danger' : 'ms-status-ok';
+        return `
+        <div class="ms-card keeping-split-cell ${expired ? 'ms-card-expired' : ''}">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+                <div style="flex:1;min-width:0">
                     <div class="ms-type">키핑권 · 보드 보관</div>
-                    ${k.boardBrand ? `<div class="ms-remain" style="margin-top:6px"><span class="ms-remain-num" style="font-size:22px">🏂 ${escapeHtml(k.boardBrand)}</span></div>` : ''}
+                    ${k.boardBrand ? `<div class="ms-remain" style="margin-top:6px"><span class="ms-remain-num" style="font-size:20px">🏂 ${escapeHtml(k.boardBrand)}</span></div>` : ''}
                     <div class="ms-status ${statusCls}" style="margin-top:10px">${remainText}</div>
                     <div class="ms-detail">${escapeHtml(k.startDate)} ~ ${k.endDate ? escapeHtml(k.endDate) : '종료일 없음'}</div>
                 </div>
-                ${k.boardImageUrl ? `<img src="${escapeHtml(k.boardImageUrl)}" alt="보드" style="width:72px;height:64px;object-fit:cover;border-radius:10px;flex-shrink:0;opacity:0.92" onerror="this.style.display='none'">` : ''}
+                ${k.boardImageUrl ? `<img src="${escapeHtml(k.boardImageUrl)}" alt="보드" style="width:56px;height:50px;object-fit:cover;border-radius:8px;flex-shrink:0;opacity:0.92" onerror="this.style.display='none'">` : ''}
             </div>
         </div>`;
+    })() : '';
+
+    const seasonHtml = season ? (() => {
+        const expired = season.expired;
+        const remainText = season.remainDays !== null
+            ? (expired ? '만료됨' : `${season.remainDays}일 남음`)
+            : '기간 무제한';
+        const statusCls = expired ? 'ms-status-danger' : 'ms-status-ok';
+        return `
+        <div class="ms-card ms-card-season keeping-split-cell ${expired ? 'ms-card-expired' : ''}">
+            <div class="ms-type">시즌방 🏄</div>
+            <div class="ms-remain" style="margin-top:6px">
+                ${season.remainDays !== null && !expired
+                    ? `<span class="ms-remain-num" style="font-size:20px">${season.remainDays}</span><span class="ms-remain-unit">일 남음</span>`
+                    : `<span class="ms-remain-num" style="font-size:16px">${remainText}</span>`
+                }
+            </div>
+            <div class="ms-status ${statusCls}" style="margin-top:10px">${expired ? '만료됨' : '이용중'}</div>
+            <div class="ms-detail">${escapeHtml(season.startDate)} ~ ${season.endDate ? escapeHtml(season.endDate) : '종료일 없음'}</div>
+        </div>`;
+    })() : '';
+
+    if (k && season) {
+        card.innerHTML = `<div class="keeping-split-grid">${keepingHtml}${seasonHtml}</div>`;
+    } else {
+        card.innerHTML = keepingHtml || seasonHtml;
+    }
 }
 
 /* ── 내 정보 ── */
