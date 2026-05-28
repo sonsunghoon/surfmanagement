@@ -557,6 +557,28 @@ function renderMembershipForm(ms) {
             <button class="btn btn-outline btn-sm" style="margin-top:4px" onclick="switchToNewMembership('PERIOD')">새로 발급하기</button>`;
         $('btn-assign-ms').textContent = '기간 변경';
         $('btn-assign-ms').onclick = submitModifyPeriod;
+    } else if (ms.type === 'SEASON') {
+        const expired = ms.expired;
+        $('modal-body').innerHTML = `
+            <div id="modal-alert" class="alert alert-danger hidden"></div>
+            <div class="ms-current-info ${expired ? 'ms-card-expired' : 'ms-card-period'}" style="padding:12px 14px;border-radius:var(--radius);margin-bottom:16px">
+                <div style="font-weight:700;margin-bottom:4px">🏄 현재 시즌방</div>
+                <div style="font-size:13px;opacity:0.85">${escapeHtml(ms.startDate)} ~ ${escapeHtml(ms.endDate)}
+                    &nbsp;·&nbsp; ${expired ? '<span style="color:var(--danger)">만료됨</span>' : `<b>${ms.remainDays}일 남음</b>`}</div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">시작일</label>
+                    <input type="date" id="ms-mod-start" class="form-control" value="${escapeHtml(ms.startDate)}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">종료일 <span class="required">*</span></label>
+                    <input type="date" id="ms-mod-end" class="form-control" value="${escapeHtml(ms.endDate)}">
+                </div>
+            </div>
+            <button class="btn btn-outline btn-sm" style="margin-top:4px" onclick="switchToNewMembership('SEASON')">새로 발급하기</button>`;
+        $('btn-assign-ms').textContent = '기간 변경';
+        $('btn-assign-ms').onclick = submitModifyPeriod;
     } else {
         const remain = ms.remainSessions;
         $('modal-body').innerHTML = `
