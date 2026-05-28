@@ -31,7 +31,7 @@ public class ExpiryNotificationScheduler {
             if (ms.getEndDate() == null) continue;
             long daysLeft = ChronoUnit.DAYS.between(today, ms.getEndDate());
 
-            if (daysLeft == 30 || daysLeft == 14 || daysLeft == 7 || daysLeft == 3) {
+            if (daysLeft == 7) {
                 Member member = ms.getMember();
                 emailService.sendMembershipExpiryWarning(
                     member.getEmail(),
