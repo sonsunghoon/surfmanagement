@@ -46,9 +46,10 @@ public class MembershipService {
                     }
                     ms.setEndDate(req.getEndDate());
                 }
-            } else {
+            } else if (ms.getType() == Membership.MembershipType.SESSION) {
                 if (req.getSessionAdjustment() == null) return ApiResponse.error("조정 횟수를 입력해주세요.");
-                int newTotal = ms.getTotalSessions() + req.getSessionAdjustment();
+                int current = ms.getTotalSessions() != null ? ms.getTotalSessions() : 0;
+                int newTotal = current + req.getSessionAdjustment();
                 if (newTotal < ms.getUsedSessions()) {
                     return ApiResponse.error("사용한 횟수(" + ms.getUsedSessions() + "회)보다 적게 설정할 수 없습니다.");
                 }
